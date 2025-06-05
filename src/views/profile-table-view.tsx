@@ -392,6 +392,7 @@ const getStyle = withTheme(theme =>
       whiteSpace: 'nowrap',
       width: '100%',
       maxWidth: 0,
+      textAlign: 'start',
     },
     hBarDisplay: {
       position: 'absolute',

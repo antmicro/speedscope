@@ -59,8 +59,7 @@ async function importFromFileSystemDirectoryEntry(entry: FileSystemDirectoryEntr
   return (await importModule).importFromFileSystemDirectoryEntry(entry)
 }
 
-declare function require(x: string): any
-const exampleProfileURL = require('../../sample/profiles/stackcollapse/perf-vertx-stacks-01-collapsed-all.txt')
+import exampleProfileURL from '../../sample/profiles/stackcollapse/perf-vertx-stacks-01-collapsed-all.txt'
 
 function isFileSystemDirectoryEntry(entry: FileSystemEntry): entry is FileSystemDirectoryEntry {
   return entry != null && entry.isDirectory
@@ -615,7 +614,10 @@ export class Application extends StatelessComponent<ApplicationProps> {
 const getStyle = withTheme(theme =>
   StyleSheet.create({
     glCanvasView: {
-      position: 'absolute',
+      // WebGL canvas is assumed to be placed at the top of the view
+      position: 'fixed',
+      top: 0,
+      left: 0,
       width: '100vw',
       height: '100vh',
       zIndex: -1,
@@ -647,8 +649,8 @@ const getStyle = withTheme(theme =>
       animationDuration: '30s',
     },
     root: {
-      width: '100vw',
-      height: '100vh',
+      width: '100%',
+      height: '100%',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column',

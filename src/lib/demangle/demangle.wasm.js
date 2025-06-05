@@ -12,5 +12,4 @@ var Module=moduleArg;var readyPromiseResolve,readyPromiseReject;var readyPromise
  *
  * This file is only used as --extern-post-js of emcc.
  */
-module.exports = Module
-module.exports.default = Module
+export default Module;

@@ -4,6 +4,11 @@ import {ThemeProvider} from './views/themes/theme'
 
 console.log(`speedscope v${require('../package.json').version}`)
 
+const useFullViewportStyles = {
+  width: '100vw',
+  height: '100vh',
+}
+
 /*
 TODO(jlfwong): Fix this
 declare const module: any
@@ -17,9 +22,11 @@ if (module.hot) {
 */
 
 render(
-  <ThemeProvider>
-    <ApplicationContainer />
-  </ThemeProvider>,
+  <div style={useFullViewportStyles}>
+    <ThemeProvider>
+      <ApplicationContainer />
+    </ThemeProvider>
+  </div>,
   document.body,
   document.body.lastElementChild || undefined,
 )
