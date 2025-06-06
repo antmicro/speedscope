@@ -18,6 +18,9 @@ export interface FrameInfo {
 
   // Column in the file, 1-based.
   col?: number
+
+  // Additional data
+  args?: Object
 }
 
 export type SymbolRemapper = (
@@ -46,7 +49,7 @@ export class HasWeights {
   }
 }
 
-export class Frame extends HasWeights {
+export class Frame extends HasWeights implements FrameInfo {
   key: string | number
 
   // Name of the frame. May be a method name, e.g.
@@ -63,6 +66,9 @@ export class Frame extends HasWeights {
   // Column in the file
   col?: number
 
+  // Additional data
+  args?: Object
+
   private constructor(info: FrameInfo) {
     super()
     this.key = info.key
@@ -70,6 +76,7 @@ export class Frame extends HasWeights {
     this.file = info.file
     this.line = info.line
     this.col = info.col
+    this.args = info.args
   }
 
   static root = new Frame({
@@ -693,5 +700,10 @@ export class CallTreeProfileBuilder extends Profile {
     }
     this.sortGroupedCallTree()
     return this
+  }
+
+  updateFrameArgs(frameInfo: FrameInfo, args: Object) {
+    const frame = Frame.getOrInsert(this.frames, frameInfo)
+    frame.args = {...frame.args, ...args}
   }
 }

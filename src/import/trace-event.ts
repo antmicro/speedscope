@@ -317,9 +317,6 @@ function getEventName(event: TraceEvent): string {
  */
 function getEventId(event: TraceEvent): string {
   let key = getEventName(event)
-  if (event.args) {
-    key += ` ${JSON.stringify(event.args)}`
-  }
   return key
 }
 
@@ -346,6 +343,7 @@ function frameInfoForEvent(
   return {
     name: key,
     key: key,
+    args: {[(event.ph === 'B') ? 'begin' : 'end']: event.args},
   }
 }
 
@@ -479,6 +477,10 @@ function eventListToProfile(
     }
 
     frameStack.pop()
+    // Add args from the end event to the frame
+    if (e.args) {
+      profileBuilder.updateFrameArgs(bFrameInfo, {end: e.args})
+    }
     profileBuilder.leaveFrame(bFrameInfo, e.ts)
   }
 
