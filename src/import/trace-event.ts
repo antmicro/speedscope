@@ -7,6 +7,8 @@ import {
   StackListProfileBuilder,
 } from '../lib/profile'
 import {TimeFormatter} from '../lib/value-formatters'
+import {metadataAtom} from '../app-state'
+import {Metadata} from '../app-state/profile-group';
 
 // This file concerns import from the "Trace Event Format", authored by Google
 // and used for Google's own chrome://trace.
@@ -646,6 +648,9 @@ function eventListToProfileGroup(
   const partitionedTraceEvents = partitionByPidTid(importableEvents)
   const profileNamesByPidTid = getProfileNamesFromTraceEvents(events, partitionedTraceEvents)
 
+  // Extract metadata
+  importMetadata(events)
+
   const profilePairs: [string, Profile][] = []
 
   profileNamesByPidTid.forEach((name, profileKey) => {
@@ -770,6 +775,15 @@ function isTraceEventWithSamples(
     'samples' in maybeTraceEventObject &&
     isTraceEventList(maybeTraceEventObject['traceEvents'])
   )
+}
+
+function importMetadata(events: TraceEvent[]) {
+  const metadata: Metadata[] = []
+  for (const event of events) {
+    if (event.ph !== 'M') continue
+    metadata.push(event)
+  }
+  metadataAtom.set(metadata)
 }
 
 export function isTraceEventFormatted(rawProfile: any): rawProfile is Trace {

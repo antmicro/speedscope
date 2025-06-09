@@ -1,7 +1,7 @@
 import {Atom} from '../lib/atom'
 import {ViewMode} from '../lib/view-mode'
 import {getHashParams, HashParams} from '../lib/hash-params'
-import {ProfileGroupAtom} from './profile-group'
+import {ProfileGroupAtom, Metadata} from './profile-group'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -50,6 +50,8 @@ export const loadingAtom = new Atom<boolean>(isImmediatelyLoading, 'loading')
 // True when the application is an error state, e.g. because the profile
 // imported was invalid.
 export const errorAtom = new Atom<boolean>(false, 'error')
+
+export const metadataAtom = new Atom<Metadata[] | null>(null, 'metadata');
 
 export enum SortField {
   SYMBOL_NAME,
