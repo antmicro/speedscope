@@ -214,10 +214,14 @@ export class Application extends StatelessComponent<ApplicationProps> {
       await profile.demangle()
     }
 
-    for (let profile of profileGroup.profiles) {
+    profileGroup.profiles.forEach((profile, i) => {
       const title = this.props.hashParams.title || profile.getName()
       profile.setName(title)
-    }
+      // By default select profile named as "main"
+      if (title.startsWith("main (")) {
+        profileGroup.indexToView = i;
+      }
+    })
 
     console.timeEnd('import')
 
