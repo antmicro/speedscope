@@ -2,6 +2,7 @@ import {Atom} from '../lib/atom'
 import {ViewMode} from '../lib/view-mode'
 import {getHashParams, HashParams} from '../lib/hash-params'
 import {ProfileGroupAtom, Metadata} from './profile-group'
+import { VNode } from 'preact'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -51,7 +52,19 @@ export const loadingAtom = new Atom<boolean>(isImmediatelyLoading, 'loading')
 // imported was invalid.
 export const errorAtom = new Atom<boolean>(false, 'error')
 
+// Stores the metadata of loaded profile
 export const metadataAtom = new Atom<Metadata[] | null>(null, 'metadata');
+
+// Type for the function that returns Element with a welcome message
+type WelcomeMessageFunc = (divClass: string, pClass: string, aClass: string, browseButton: VNode<HTMLButtonElement>) => VNode<HTMLDivElement>
+export type CustomWelcomeMessage = {
+  // Default message when no profile is loaded
+  default?: WelcomeMessageFunc
+  // Message when profile with only metadata is loaded
+  metadataOnly?: WelcomeMessageFunc
+}
+
+export const customWelcomeMessagesAtom = new Atom<CustomWelcomeMessage>({}, 'welcomeMessage')
 
 export enum SortField {
   SYMBOL_NAME,
@@ -70,7 +83,7 @@ export interface SortMethod {
 }
 
 // The table sorting method using for the sandwich view, specifying the column
-// to sort by, and the direction to sort that clumn.
+// to sort by, and the direction to sort that column.
 export const tableSortMethodAtom = new Atom<SortMethod>(
   {
     field: SortField.SELF,
