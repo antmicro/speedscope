@@ -12,6 +12,7 @@ import {
   loadingAtom,
   profileGroupAtom,
   viewModeAtom,
+  customWelcomeMessagesAtom,
 } from '../app-state'
 import {useAtom} from '../lib/atom'
 import {ProfileSearchContextProvider} from './search-view'
@@ -47,6 +48,7 @@ export const ApplicationContainer = memo(() => {
         dragActive={useAtom(dragActiveAtom)}
         loading={useAtom(loadingAtom)}
         error={useAtom(errorAtom)}
+        customWelcomeMessage={useAtom(customWelcomeMessagesAtom)}
       />
     </ProfileSearchContextProvider>
   )
