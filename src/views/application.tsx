@@ -15,7 +15,7 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, metadataAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
@@ -166,6 +166,7 @@ export type ApplicationProps = {
   loading: boolean
   glCanvas: HTMLCanvasElement | null
   error: boolean
+  customWelcomeMessage: CustomWelcomeMessage
 }
 
 export class Application extends StatelessComponent<ApplicationProps> {
@@ -192,7 +193,9 @@ export class Application extends StatelessComponent<ApplicationProps> {
       alert('Unrecognized format! See documentation about supported formats.')
       this.props.setLoading(false)
       return
-    } else if (profileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
+    } else if (profileGroup.profiles.length === 0 &&
+      (this.props.customWelcomeMessage.metadataOnly === undefined || (metadataAtom.get()?.length ?? 0) === 0)
+    ) {
       alert("Successfully imported profile, but it's empty!")
       this.props.setLoading(false)
       return
@@ -488,85 +491,72 @@ export class Application extends StatelessComponent<ApplicationProps> {
       </div>
     )
 
-    const defaultMessage = (
-      <div className={css(style.landingMessage)}>
-        <p className={css(style.landingP)}>
-          👋 Hi there! Welcome to 🔬speedscope, an interactive{' '}
-          <a
-            className={css(style.link)}
-            href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html"
-          >
-            flamegraph
-          </a>{' '}
-          visualizer. Use it to help you make your software faster.
-        </p>
-        {canUseXHR ? (
-          <p className={css(style.landingP)}>
-            Drag and drop a profile file onto this window to get started, click the big blue
-            button below to browse for a profile to explore, or{' '}
-            <a tabIndex={0} className={css(style.link)} onClick={this.loadExample}>
-              click here
-            </a>{' '}
-            to load an example profile.
-          </p>
-        ) : (
-          <p className={css(style.landingP)}>
-            Drag and drop a profile file onto this window to get started, or click the big blue
-            button below to browse for a profile to explore.
-          </p>
-        )}
-        {browseButton}
-
-        <p className={css(style.landingP)}>
-          See the{' '}
-          <a
-            className={css(style.link)}
-            href="https://github.com/jlfwong/speedscope#usage"
-            target="_blank"
-          >
-            documentation
-          </a>{' '}
-          for information about supported file formats, keyboard shortcuts, and how to navigate
-          around the profile.
-        </p>
-
-        <p className={css(style.landingP)}>
-          speedscope is open source. Please{' '}
-          <a
-            className={css(style.link)}
-            target="_blank"
-            href="https://github.com/jlfwong/speedscope/issues"
-          >
-            report any issues on GitHub
-          </a>
-          .
-        </p>
-      </div>
-    )
-
-    const metadataOnlyMessage = (
-      <div className={css(style.landingMessage)}>
-        <p className={css(style.landingP)}>
-          👋 Hi there! Loaded profile contains only metadata, an interactive{' '}
-          <a
-            className={css(style.link)}
-            href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html"
-          >
-            flamegraph
-          </a>{' '}
-          visualizer will not be displayed.
-        </p>
-        <p className={css(style.landingP)}>
-          Drag and drop a profile file onto this window to load different profile,
-          or click the big blue button below to browse for a profile to explore.
-        </p>
-        {browseButton}
-      </div>
-    )
-
     return (
       <div className={css(style.landingContainer)}>
-        {((metadataAtom.get()?.length ?? 0) == 0) ? defaultMessage : metadataOnlyMessage}
+        {(this.props.customWelcomeMessage.metadataOnly === undefined || (metadataAtom.get()?.length ?? 0) === 0) ?
+          ((this.props.customWelcomeMessage.default) ?
+            // Use custom welcome message
+            this.props.customWelcomeMessage.default(css(style.landingMessage), css(style.landingP), css(style.link), browseButton)
+            :
+            // Use default welcome message
+            <div className={css(style.landingMessage)}>
+              <p className={css(style.landingP)}>
+                👋 Hi there! Welcome to 🔬speedscope, an interactive{' '}
+                <a
+                  className={css(style.link)}
+                  href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html"
+                >
+                  flamegraph
+                </a>{' '}
+                visualizer. Use it to help you make your software faster.
+              </p>
+              {canUseXHR ? (
+                <p className={css(style.landingP)}>
+                  Drag and drop a profile file onto this window to get started, click the big blue
+                  button below to browse for a profile to explore, or{' '}
+                  <a tabIndex={0} className={css(style.link)} onClick={this.loadExample}>
+                    click here
+                  </a>{' '}
+                  to load an example profile.
+                </p>
+              ) : (
+                <p className={css(style.landingP)}>
+                  Drag and drop a profile file onto this window to get started, or click the big blue
+                  button below to browse for a profile to explore.
+                </p>
+              )}
+              {browseButton}
+
+              <p className={css(style.landingP)}>
+                See the{' '}
+                <a
+                  className={css(style.link)}
+                  href="https://github.com/jlfwong/speedscope#usage"
+                  target="_blank"
+                >
+                  documentation
+                </a>{' '}
+                for information about supported file formats, keyboard shortcuts, and how to navigate
+                around the profile.
+              </p>
+
+              <p className={css(style.landingP)}>
+                speedscope is open source. Please{' '}
+                <a
+                  className={css(style.link)}
+                  target="_blank"
+                  href="https://github.com/jlfwong/speedscope/issues"
+                >
+                  report any issues on GitHub
+                </a>
+                .
+              </p>
+            </div>
+          )
+        :
+        // Use custom message for metadata only profiles
+        this.props.customWelcomeMessage.metadataOnly(css(style.landingMessage), css(style.landingP), css(style.link), browseButton)
+        }
       </div>
     )
   }
