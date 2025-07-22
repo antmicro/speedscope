@@ -8,7 +8,7 @@ import {Profile} from '../lib/profile'
 import {objectsHaveShallowEquality} from '../lib/utils'
 import {colorSchemeToString, useTheme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {viewModeAtom} from '../app-state'
+import {toolbarTitleAtom, viewModeAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {colorSchemeAtom} from '../app-state/color-scheme'
 import {useAtom} from '../lib/atom'
@@ -153,7 +153,7 @@ function ToolbarCenterContent(props: ToolbarProps): JSX.Element {
       )
     }
   }
-  return <Fragment>{'🔬speedscope'}</Fragment>
+  return <Fragment>{useAtom(toolbarTitleAtom)}</Fragment>
 }
 
 function ToolbarRightContent(props: ToolbarProps) {
