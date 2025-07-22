@@ -66,6 +66,9 @@ export type CustomWelcomeMessage = {
 
 export const customWelcomeMessagesAtom = new Atom<CustomWelcomeMessage>({}, 'welcomeMessage')
 
+// The title displayed in the midle of the toolbar when profile is not loaded
+export const toolbarTitleAtom = new Atom<string>('🔬speedscope', 'toolbarTitle')
+
 export enum SortField {
   SYMBOL_NAME,
   SELF,
