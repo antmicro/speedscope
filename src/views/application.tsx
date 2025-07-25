@@ -1,7 +1,7 @@
 import '../../assets/reset.css'
 import '../../assets/source-code-pro.css'
 
-import {h} from 'preact'
+import {createRef, h} from 'preact'
 import {StyleSheet, css} from 'aphrodite'
 
 import {ProfileGroup, SymbolRemapper} from '../lib/profile'
@@ -170,6 +170,8 @@ export type ApplicationProps = {
 }
 
 export class Application extends StatelessComponent<ApplicationProps> {
+  glCanvasRef = createRef<GLCanvas>()
+
   private async loadProfile(loader: () => Promise<ProfileGroup | null>) {
     this.props.setError(false)
     this.props.setLoading(true)
@@ -199,6 +201,9 @@ export class Application extends StatelessComponent<ApplicationProps> {
       alert("Successfully imported profile, but it's empty!")
       this.props.setLoading(false)
       return
+    } else if (profileGroup.profiles.length === 0 && this.glCanvasRef.current) {
+      // Request to rerender webGL to get rid of all artifacts from previous profile
+      this.glCanvasRef.current.onWindowResize()
     }
 
     if (this.props.hashParams.title) {
@@ -617,6 +622,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
         className={css(style.root, this.props.dragActive && style.dragTargetRoot)}
       >
         <GLCanvas
+          ref={this.glCanvasRef}
           setGLCanvas={this.props.setGLCanvas}
           canvasContext={this.props.canvasContext}
           theme={this.props.theme}
