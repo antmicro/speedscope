@@ -3,6 +3,8 @@ import {ViewMode} from '../lib/view-mode'
 import {getHashParams, HashParams} from '../lib/hash-params'
 import {ProfileGroupAtom, Metadata} from './profile-group'
 import { VNode } from 'preact'
+import { MutableRef } from 'preact/hooks'
+import { Application } from '../views/application'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -66,8 +68,27 @@ export type CustomWelcomeMessage = {
 
 export const customWelcomeMessagesAtom = new Atom<CustomWelcomeMessage>({}, 'welcomeMessage')
 
-// The title displayed in the midle of the toolbar when profile is not loaded
-export const toolbarTitleAtom = new Atom<string>('🔬speedscope', 'toolbarTitle')
+// The optional toolbar config - undefined fields fall back to the default behavior
+interface ToolbarConfig {
+  // The title of toolbar, displayed when no profile is loaded
+  title?: string,
+  // Whether import button should be displayed
+  importButton?: boolean,
+  // Whether export button should be displayed
+  exportButton?: boolean,
+  // Whether theme button should be displayed
+  themeButton?: boolean,
+  // Whether help button should be displayed
+  helpButton?: boolean,
+  // Whether importing with drag&drop should be enabled
+  dragImport?: boolean,
+}
+
+// The toolbar configuration allowing to change title or disable buttons
+export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
+
+// The reference to the object with application
+export const appRefAtom = new Atom<MutableRef<Application | undefined> | null>(null, 'appRef');
 
 export enum SortField {
   SYMBOL_NAME,
