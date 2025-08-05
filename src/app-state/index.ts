@@ -62,8 +62,6 @@ type WelcomeMessageFunc = (divClass: string, pClass: string, aClass: string, bro
 export type CustomWelcomeMessage = {
   // Default message when no profile is loaded
   default?: WelcomeMessageFunc
-  // Message when profile with only metadata is loaded
-  metadataOnly?: WelcomeMessageFunc
 }
 
 export const customWelcomeMessagesAtom = new Atom<CustomWelcomeMessage>({}, 'welcomeMessage')
@@ -83,6 +81,9 @@ interface ToolbarConfig {
   // Whether importing with drag&drop should be enabled
   dragImport?: boolean,
 }
+
+// The state indicating whether loaded profile contains only metadata
+export const metadataOnlyProfileAtom = new Atom<boolean>(false, 'metadataOnlyProfile');
 
 // The toolbar configuration allowing to change title or disable buttons
 export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
