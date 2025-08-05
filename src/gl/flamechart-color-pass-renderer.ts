@@ -122,6 +122,10 @@ export class FlamechartColorPassRenderer {
 
     this.buffer = gl.createVertexBuffer(vertexFormat.stride * vertices.length)
     this.buffer.uploadFloats(floats)
+    this.updateMaterial(gl, theme)
+  }
+
+  updateMaterial(gl: Graphics.Context, theme: Theme) {
     this.material = gl.createMaterial(vertexFormat, vert, frag(theme.colorForBucketGLSL))
   }
 
