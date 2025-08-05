@@ -6,6 +6,7 @@ import {Color} from '../../lib/color'
 import {memoizeByReference} from '../../lib/utils'
 import {darkTheme} from './dark-theme'
 import {lightTheme} from './light-theme'
+import {metadataOnlyProfileAtom} from '../../app-state'
 
 export interface Theme {
   fgPrimaryColor: string
@@ -94,6 +95,13 @@ export function ThemeProvider(props: {children: ComponentChildren}) {
   }, [matchMediaListener])
 
   const colorScheme = useAtom(colorSchemeAtom)
-  const theme = getTheme(colorScheme, systemPrefersDarkMode)
+  let theme = getTheme(colorScheme, systemPrefersDarkMode)
+  const transparent = useAtom(metadataOnlyProfileAtom)
+  if (transparent) {
+    // Copy the theme and override colors for flamegraph
+    theme = Object.assign({}, theme)
+    theme.colorForBucket = () => new Color(0, 0, 0, 0)
+    theme.colorForBucketGLSL = `vec3 colorForBucket(float t) {return vec3(0, 0, 0);}`
+  }
   return <ThemeContext.Provider value={theme} children={props.children} />
 }
