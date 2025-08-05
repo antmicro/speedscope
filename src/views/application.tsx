@@ -15,7 +15,7 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
@@ -316,17 +316,28 @@ export class Application extends StatelessComponent<ApplicationProps> {
     })
   }
 
+  private checkDragImportEnabled = () => {
+    return toolbarConfigAtom.get().dragImport ?? true;
+  }
+
   onDrop = (ev: DragEvent) => {
+    if (!this.checkDragImportEnabled()) {
+      return;
+    }
     this.props.setDragActive(false)
     ev.preventDefault()
 
-    if (!ev.dataTransfer) return
+    this.loadDropFile(ev);
+  }
 
+  loadDropFile = (ev: DragEvent) => {
+    if (!ev.dataTransfer) return
     const firstItem = ev.dataTransfer.items[0]
-    if ('webkitGetAsEntry' in firstItem) {
+    if (firstItem && 'webkitGetAsEntry' in firstItem) {
       const webkitEntry: FileSystemEntry | null = firstItem.webkitGetAsEntry()
 
       // Instrument.app file format is actually a directory.
+      console.log(firstItem, webkitEntry);
       if (
         webkitEntry &&
         isFileSystemDirectoryEntry(webkitEntry) &&
@@ -339,20 +350,31 @@ export class Application extends StatelessComponent<ApplicationProps> {
         })
         return
       }
+    } else if (!firstItem) {
+      console.warn("Drag&drop has not provided any items");
     }
 
     let file: File | null = ev.dataTransfer.files.item(0)
     if (file) {
+      console.log("importing from file", file);
       this.loadFromFile(file)
+    } else {
+      console.warn("Drag&drop has not provided any files");
     }
   }
 
   onDragOver = (ev: DragEvent) => {
+    if (!this.checkDragImportEnabled()) {
+      return;
+    }
     this.props.setDragActive(true)
     ev.preventDefault()
   }
 
   onDragLeave = (ev: DragEvent) => {
+    if (!this.checkDragImportEnabled()) {
+      return;
+    }
     this.props.setDragActive(false)
     ev.preventDefault()
   }
@@ -380,7 +402,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
-  private saveFile = () => {
+  saveFile = () => {
     if (this.props.profileGroup) {
       const {name, indexToView, profiles} = this.props.profileGroup
       const profileGroup: ProfileGroup = {
@@ -392,7 +414,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
-  private browseForFile = () => {
+  browseForFile = () => {
     const input = document.createElement('input')
     input.type = 'file'
     input.addEventListener('change', this.onFileSelect)
