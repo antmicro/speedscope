@@ -4,7 +4,7 @@ import '../../assets/source-code-pro.css'
 import {createRef, h} from 'preact'
 import {StyleSheet, css} from 'aphrodite'
 
-import {ProfileGroup, SymbolRemapper} from '../lib/profile'
+import {CallTreeProfileBuilder, ProfileGroup, SymbolRemapper} from '../lib/profile'
 import {FontFamily, FontSize, Duration} from './style'
 import {importEmscriptenSymbolMap as importEmscriptenSymbolRemapper} from '../lib/emscripten'
 import {saveToFile} from '../lib/file-format'
@@ -15,11 +15,12 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
 import {SandwichViewContainer} from './sandwich-view'
+import { useAtom } from '../lib/atom'
 
 const importModule = import('../import')
 
@@ -195,15 +196,21 @@ export class Application extends StatelessComponent<ApplicationProps> {
       alert('Unrecognized format! See documentation about supported formats.')
       this.props.setLoading(false)
       return
-    } else if (profileGroup.profiles.length === 0 &&
-      (this.props.customWelcomeMessage.metadataOnly === undefined || (metadataAtom.get()?.length ?? 0) === 0)
-    ) {
+    } else if (profileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
       alert("Successfully imported profile, but it's empty!")
       this.props.setLoading(false)
       return
-    } else if (profileGroup.profiles.length === 0 && this.glCanvasRef.current) {
-      // Request to rerender webGL to get rid of all artifacts from previous profile
-      this.glCanvasRef.current.onWindowResize()
+    } else if (profileGroup.profiles.length === 0) {
+      // Profile with only metadata loaded - creates artificial empty profile
+      const maxTs = Math.max(...(metadataAtom.get()?.map(v => v.ts).filter(Boolean) ?? [1]))
+      metadataOnlyProfileAtom.set(true);
+      const p = new CallTreeProfileBuilder(maxTs)
+      const frameInfo = {key: 'no_trace', name: ''}
+      p.enterFrame(frameInfo, 0)
+      p.leaveFrame(frameInfo, maxTs)
+      profileGroup.profiles.push(p.build());
+    } else {
+      metadataOnlyProfileAtom.set(false);
     }
 
     if (this.props.hashParams.title) {
@@ -232,6 +239,14 @@ export class Application extends StatelessComponent<ApplicationProps> {
     })
 
     console.timeEnd('import')
+    setTimeout(() => {
+      if (!this.glCanvasRef.current) {
+        console.warn("webGL colors will not be updated")
+        return
+      }
+      // Update colors for webGL context, as it does not react on theme change
+      this.glCanvasRef.current.props.canvasContext?.flamechartColorPassRenderer.updateMaterial(this.glCanvasRef.current.props.canvasContext.gl, this.props.theme)
+    })
 
     this.props.setProfileGroup(profileGroup)
     this.props.setLoading(false)
@@ -520,8 +535,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     return (
       <div className={css(style.landingContainer)}>
-        {(this.props.customWelcomeMessage.metadataOnly === undefined || (metadataAtom.get()?.length ?? 0) === 0) ?
-          ((this.props.customWelcomeMessage.default) ?
+        {((this.props.customWelcomeMessage.default) ?
             // Use custom welcome message
             this.props.customWelcomeMessage.default(css(style.landingMessage), css(style.landingP), css(style.link), browseButton)
             :
@@ -580,9 +594,6 @@ export class Application extends StatelessComponent<ApplicationProps> {
               </p>
             </div>
           )
-        :
-        // Use custom message for metadata only profiles
-        this.props.customWelcomeMessage.metadataOnly(css(style.landingMessage), css(style.landingP), css(style.link), browseButton)
         }
       </div>
     )
@@ -636,6 +647,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
   render() {
     const style = this.getStyle()
+    const transparent = useAtom(metadataOnlyProfileAtom);
     return (
       <div
         onDrop={this.onDrop}
@@ -656,6 +668,10 @@ export class Application extends StatelessComponent<ApplicationProps> {
         />
         <div className={css(style.contentContainer)}>{this.renderContent()}</div>
         {this.props.dragActive && <div className={css(style.dragTarget)} />}
+        {transparent && <div className={css(style.noTraceWatermark)}>
+          <h1 className={css(style.watermarkH1)}>NO TRACE</h1>
+          <p className={css(style.watermarkP)}>This TEF does not come with any trace</p>
+        </div>}
       </div>
     )
   }
@@ -772,6 +788,31 @@ const getStyle = withTheme(theme =>
       ':hover': {
         color: theme.selectionSecondaryColor,
       },
+    },
+    noTraceWatermark: {
+      backgroundColor: "transparent",
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      opacity: 0.5,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1.1rem',
+      justifyContent: 'center',
+      alignItems: 'center',
+      textAlign: 'center',
+      'user-select': 'none',
+      '-webki-user-select': 'none',
+      '-ms-user-select': 'none',
+    },
+    watermarkH1: {
+      fontSize: '7.5em',
+      lineHeight: '6rem',
+    },
+    watermarkP: {
+      fontSize: '1.4em',
     },
   }),
 )
