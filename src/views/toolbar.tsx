@@ -8,7 +8,7 @@ import {Profile} from '../lib/profile'
 import {objectsHaveShallowEquality} from '../lib/utils'
 import {colorSchemeToString, useTheme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {toolbarTitleAtom, viewModeAtom} from '../app-state'
+import {toolbarConfigAtom, viewModeAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {colorSchemeAtom} from '../app-state/color-scheme'
 import {useAtom} from '../lib/atom'
@@ -153,12 +153,13 @@ function ToolbarCenterContent(props: ToolbarProps): JSX.Element {
       )
     }
   }
-  return <Fragment>{useAtom(toolbarTitleAtom)}</Fragment>
+  return <Fragment>{useAtom(toolbarConfigAtom).title ?? '🔬speedscope'}</Fragment>
 }
 
 function ToolbarRightContent(props: ToolbarProps) {
   const style = getStyle(useTheme())
   const colorScheme = useAtom(colorSchemeAtom)
+  const toolbarConfig = useAtom(toolbarConfigAtom);
 
   const exportFile = (
     <div className={css(style.toolbarTab)} onClick={props.saveFile}>
@@ -194,10 +195,10 @@ function ToolbarRightContent(props: ToolbarProps) {
 
   return (
     <div className={css(style.toolbarRight)}>
-      {props.activeProfileState && exportFile}
-      {importFile}
-      {colorSchemeToggle}
-      {help}
+      {(toolbarConfig.exportButton ?? true) && props.activeProfileState && exportFile}
+      {(toolbarConfig.importButton ?? true) && importFile}
+      {(toolbarConfig.themeButton ?? true) && colorSchemeToggle}
+      {(toolbarConfig.helpButton ?? true) && help}
     </div>
   )
 }
