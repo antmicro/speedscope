@@ -1,5 +1,7 @@
 // This file contains types which specify the speedscope file format.
 
+import { Metadata } from "../app-state/profile-group"
+
 export namespace FileFormat {
   export type Profile = EventedProfile | SampledProfile
 
@@ -34,6 +36,9 @@ export namespace FileFormat {
     //
     // Added in 0.6.0
     exporter?: string
+
+    // List of metadata included in profile
+    metadata?: Metadata[],
   }
 
   export interface Frame {

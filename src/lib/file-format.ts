@@ -9,6 +9,8 @@ import {
 } from './profile'
 import {TimeFormatter, ByteFormatter, RawValueFormatter} from './value-formatters'
 import {FileFormat} from './file-format-spec'
+import { metadataAtom } from '../app-state'
+import { version } from '../../package.json';
 
 export function exportProfileGroup(profileGroup: ProfileGroup): FileFormat.File {
   const frames: FileFormat.Frame[] = []
@@ -31,12 +33,17 @@ export function exportProfileGroup(profileGroup: ProfileGroup): FileFormat.File 
   }
 
   const file: FileFormat.File = {
-    exporter: `speedscope@${require('../../package.json').version}`,
+    exporter: `speedscope@${version}`,
     name: profileGroup.name,
     activeProfileIndex: profileGroup.indexToView,
     $schema: 'https://www.speedscope.app/file-format-schema.json',
     shared: {frames},
     profiles: [],
+  }
+
+  const metadata = metadataAtom.get();
+  if (metadata) {
+    file.metadata = metadata;
   }
 
   for (let profile of profileGroup.profiles) {
@@ -156,6 +163,9 @@ function importSpeedscopeProfile(
 }
 
 export function importSpeedscopeProfiles(serialized: FileFormat.File): ProfileGroup {
+  if (serialized.metadata) {
+    metadataAtom.set(serialized.metadata);
+  }
   return {
     name: serialized.name || serialized.profiles[0].name || 'profile',
     indexToView: serialized.activeProfileIndex || 0,
