@@ -9,6 +9,7 @@ import {
   ELLIPSIS,
   trimTextMid,
   remapRangesToTrimmedText,
+  cachedTextHeight,
 } from '../lib/text-utils'
 import {getFlamechartStyle} from './flamechart-style'
 import {h, Component} from 'preact'
@@ -17,6 +18,8 @@ import {ProfileSearchResults} from '../lib/profile-search'
 import {BatchCanvasTextRenderer, BatchCanvasRectRenderer} from '../lib/canvas-2d-batch-renderers'
 import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
+import {timestampHoveredAtom} from '../app-state'
+import {getPosition, HoveredPoint} from '../lib/utils'
 
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
@@ -60,6 +63,8 @@ export interface FlamechartPanZoomViewProps {
   setLogicalSpaceViewportSize: (size: Vec2) => void
 
   searchResults: ProfileSearchResults | null
+
+  enableTimestampPointer: boolean
 }
 
 export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps, {}> {
@@ -422,6 +427,28 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
         ctx.fillRect(pos, 0, 1, physicalViewSize.y)
       }
     }
+
+    // Draw on hover timestamp indicator
+    const timestampHovered = timestampHoveredAtom.get()
+    if (!this.props.enableTimestampPointer || !timestampHovered) { return }
+    const {configSpacePos, physicalSpacePos} = getPosition(timestampHovered, configToPhysical)
+    // Do not draw the indicator if it is outside of the view
+    if (0 > physicalSpacePos || physicalViewSize.x < physicalSpacePos) { return }
+    const labelText = this.props.flamechart.formatValue(configSpacePos)
+    const labelWidth = ctx.measureText(labelText).width
+
+    ctx.fillStyle = theme.fgPrimaryColor
+    ctx.fillText(
+      labelText,
+      // draw text on the right side of the indicator, if there is a space for it, otherwise draw on the left side
+      (physicalSpacePos + 2 * labelPaddingPx + labelWidth < physicalViewSize.x)
+        ? physicalSpacePos + labelPaddingPx
+        : physicalSpacePos - labelWidth - labelPaddingPx,
+      physicalViewSize.y - labelPaddingPx
+        - cachedTextHeight(ctx, labelText) - (this.props.selectedNode ? Sizes.DETAIL_VIEW_HEIGHT * window.devicePixelRatio : 0)
+    )
+    ctx.fillStyle = theme.fgSecondaryColor
+    ctx.fillRect(physicalSpacePos, 0, Sizes.TIMESTAMP_INDICATOR_WIDTH, physicalViewSize.y)
   }
 
   private updateConfigSpaceViewport() {
@@ -584,7 +611,7 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
         hoveredBounds.origin.minus(new Vec2(0, 1)),
         hoveredBounds.size.withY(this.props.configSpaceViewportRect.height()),
       )
-      this.props.setConfigSpaceViewportRect(viewportRect)
+      this.setConfigSpaceViewportRect(viewportRect)
     }
   }
 
@@ -622,19 +649,32 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     window.removeEventListener('mouseup', this.onWindowMouseUp)
   }
 
+  private setTimestampHoveredAtom = (state: HoveredPoint | null) => {
+    if (!this.props.enableTimestampPointer) return
+    // Unsubscribe, set and subscribe to avoid rerendering canvas multiple time
+    timestampHoveredAtom.unsubscribe(this.renderCanvas)
+    timestampHoveredAtom.set(state)
+    timestampHoveredAtom.subscribe(this.renderCanvas)
+  }
+
   private onMouseMove = (ev: MouseEvent) => {
     this.updateCursor()
-    if (this.lastDragPos) {
-      ev.preventDefault()
-      this.onMouseDrag(ev)
-      return
-    }
 
     const logicalViewSpaceMouse = new Vec2(ev.offsetX, ev.offsetY)
     const physicalViewSpaceMouse =
       this.logicalToPhysicalViewSpace().transformPosition(logicalViewSpaceMouse)
     const configSpaceMouse =
       this.configSpaceToPhysicalViewSpace().inverseTransformPosition(physicalViewSpaceMouse)
+    if (configSpaceMouse) {
+      // Set hovered point (convert timestamp to ms and set y position to 50%)
+      this.setTimestampHoveredAtom({x: configSpaceMouse.x / 1000, yProc: 0.5})
+    }
+
+    if (this.lastDragPos) {
+      ev.preventDefault()
+      this.onMouseDrag(ev)
+      return
+    }
 
     if (!configSpaceMouse) return
 
@@ -687,6 +727,7 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
 
   private onMouseLeave = (ev: MouseEvent) => {
     this.hoveredLabel = null
+    this.setTimestampHoveredAtom(null)
     this.props.onNodeHover(null)
     this.renderCanvas()
   }
@@ -795,6 +836,10 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
 
   render() {
     const style = this.getStyle()
+
+    if (this.props.enableTimestampPointer) {
+      timestampHoveredAtom.subscribe(this.renderCanvas)
+    }
 
     return (
       <div
