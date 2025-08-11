@@ -30,6 +30,8 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
   }
 
   private setConfigSpaceViewportRect = (viewportRect: Rect): void => {
+    if (this.props.configSpaceViewportRect.approxEquals(viewportRect)) {return;}
+
     const configSpaceDetailViewHeight = Sizes.DETAIL_VIEW_HEIGHT / Sizes.FRAME_HEIGHT
 
     const configSpaceSize = this.configSpaceSize()
@@ -46,7 +48,9 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
       ),
     )
 
-    this.props.setConfigSpaceViewportRect(new Rect(origin, viewportRect.size.withX(width)))
+    const newConfigSpace = new Rect(origin, viewportRect.size.withX(width))
+    if (this.props.configSpaceViewportRect.approxEquals(newConfigSpace)) {return;}
+    this.props.setConfigSpaceViewportRect(newConfigSpace)
   }
 
   private setLogicalSpaceViewportSize = (logicalSpaceViewportSize: Vec2): void => {
