@@ -5,6 +5,7 @@ import {ProfileGroupAtom, Metadata} from './profile-group'
 import { VNode } from 'preact'
 import { MutableRef } from 'preact/hooks'
 import { Application } from '../views/application'
+import { HoveredPoint } from '../lib/utils'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -90,6 +91,9 @@ export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
 
 // The reference to the object with application
 export const appRefAtom = new Atom<MutableRef<Application | undefined> | null>(null, 'appRef');
+
+// The coordinates of hovered point
+export const timestampHoveredAtom = new Atom<HoveredPoint | null>(null, 'timestampHovered');
 
 export enum SortField {
   SYMBOL_NAME,
