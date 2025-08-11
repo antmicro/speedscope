@@ -9,6 +9,8 @@ import {CanvasContext} from '../gl/canvas-context'
 import {cachedMeasureTextWidth} from '../lib/text-utils'
 import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
+import {timestampHoveredAtom} from '../app-state'
+import {getPosition} from '../lib/utils'
 
 interface FlamechartMinimapViewProps {
   theme: Theme
@@ -21,6 +23,8 @@ interface FlamechartMinimapViewProps {
 
   transformViewport: (transform: AffineTransform) => void
   setConfigSpaceViewportRect: (rect: Rect) => void
+
+  enableTimestampPointer: boolean
 }
 
 enum DraggingMode {
@@ -159,6 +163,16 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
         ctx.fillRect(pos, 0, 1, physicalViewSize.y)
       }
     }
+
+    // Draw on hover timestamp indicator
+    const timestampHovered = timestampHoveredAtom.get()
+    if (!this.props.enableTimestampPointer || !timestampHovered) { return }
+    const {physicalSpacePos} = getPosition(timestampHovered, configToPhysical)
+    // Do not draw the indicator if it is outside of the view
+    if (0 > physicalSpacePos || physicalViewSize.x < physicalSpacePos) { return }
+
+    ctx.fillStyle = theme.fgSecondaryColor
+    ctx.fillRect(physicalSpacePos, physicalViewSpaceFrameHeight, Sizes.TIMESTAMP_INDICATOR_WIDTH, physicalViewSize.y)
   }
 
   onWindowResize = () => {
