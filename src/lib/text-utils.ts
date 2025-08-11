@@ -5,18 +5,34 @@ export const ELLIPSIS = '\u2026'
 // NOTE: This blindly assumes the same result across contexts.
 const measureTextCache = new Map<string, number>()
 
-let lastDevicePixelRatio = -1
+let lastDevicePixelRatioForWidth = -1
 export function cachedMeasureTextWidth(ctx: CanvasRenderingContext2D, text: string): number {
-  if (window.devicePixelRatio !== lastDevicePixelRatio) {
+  if (window.devicePixelRatio !== lastDevicePixelRatioForWidth) {
     // This cache is no longer valid!
     measureTextCache.clear()
-    lastDevicePixelRatio = window.devicePixelRatio
+    lastDevicePixelRatioForWidth = window.devicePixelRatio
   }
   if (!measureTextCache.has(text)) {
     measureTextCache.set(text, ctx.measureText(text).width)
   }
   return measureTextCache.get(text)!
 }
+
+let _cachedTextHeight: number | null = null
+let lastDevicePixelRatioForHeight = -1
+export function cachedTextHeight(ctx: CanvasRenderingContext2D, text: string): number {
+  if (window.devicePixelRatio !== lastDevicePixelRatioForHeight) {
+    // This cache is no longer valid!
+    _cachedTextHeight = null
+    lastDevicePixelRatioForHeight = window.devicePixelRatio
+  }
+  if (!_cachedTextHeight) {
+    const measurement = ctx.measureText(text)
+    _cachedTextHeight = measurement.actualBoundingBoxAscent + measurement.actualBoundingBoxDescent
+  }
+  return _cachedTextHeight!
+}
+
 
 interface TrimmedTextResult {
   trimmedString: string
