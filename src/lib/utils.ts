@@ -1,3 +1,5 @@
+import { AffineTransform, Vec2 } from "./math"
+
 export function lastOf<T>(ts: T[]): T | null {
   return ts[ts.length - 1] || null
 }
@@ -232,7 +234,7 @@ export function decodeBase64(encoded: string): Uint8Array {
 
   const lookupTable = base64lookupTable()
 
-  // 3 byte groups are represented as sequneces of 4 characters.
+  // 3 byte groups are represented as sequences of 4 characters.
   //
   // "The encoding process represents 24-bit groups of input bits as output
   //  strings of 4 encoded characters."
@@ -327,4 +329,18 @@ export function decodeBase64(encoded: string): Uint8Array {
   }
 
   return bytes
+}
+
+
+export interface HoveredPoint {
+  // The timestamp in ms
+  x: number,
+  // The relative position of cursor on Y axis
+  yProc: number,
+}
+
+export const getPosition = (point: HoveredPoint, configToPhysical: AffineTransform) => {
+  const configSpacePos = point.x * 1000
+  const physicalSpacePos = Math.round(configToPhysical.transformPosition(new Vec2(configSpacePos, 0)).x)
+  return {configSpacePos, physicalSpacePos}
 }
