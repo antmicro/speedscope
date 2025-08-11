@@ -90,6 +90,7 @@ export class FlamechartWrapper extends StatelessComponent<FlamechartViewProps> {
           logicalSpaceViewportSize={this.props.logicalSpaceViewportSize}
           setLogicalSpaceViewportSize={this.setLogicalSpaceViewportSize}
           searchResults={null}
+          enableTimestampPointer={false}
         />
         {this.renderTooltip()}
       </div>

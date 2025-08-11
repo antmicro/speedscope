@@ -63,6 +63,7 @@ export type FlamechartViewProps = {
   flamechartRenderer: FlamechartRenderer
   renderInverted: boolean
   getCSSColorForFrame: (frame: Frame) => string
+  enableTimestampPointer: boolean
 } & FlamechartSetters &
   FlamechartViewState
 
@@ -144,6 +145,7 @@ export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) =
         flamechartRenderer={flamechartRenderer}
         canvasContext={canvasContext}
         getCSSColorForFrame={getCSSColorForFrame}
+        enableTimestampPointer={true}
         {...chronoViewState}
         {...setters}
       />
@@ -208,6 +210,7 @@ export const LeftHeavyFlamechartView = memo((ownProps: FlamechartViewContainerPr
         flamechartRenderer={flamechartRenderer}
         canvasContext={canvasContext}
         getCSSColorForFrame={getCSSColorForFrame}
+        enableTimestampPointer={false}
         {...leftHeavyViewState}
         {...setters}
       />

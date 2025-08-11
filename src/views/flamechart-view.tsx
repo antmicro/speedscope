@@ -121,6 +121,7 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
           flamechartRenderer={this.props.flamechartRenderer}
           canvasContext={this.props.canvasContext}
           setConfigSpaceViewportRect={this.setConfigSpaceViewportRect}
+          enableTimestampPointer={this.props.enableTimestampPointer}
         />
         <ProfileSearchContext.Consumer>
           {searchResults => (
@@ -140,6 +141,7 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
                 logicalSpaceViewportSize={this.props.logicalSpaceViewportSize}
                 setLogicalSpaceViewportSize={this.setLogicalSpaceViewportSize}
                 searchResults={searchResults}
+                enableTimestampPointer={this.props.enableTimestampPointer}
               />
               <FlamechartSearchView />
             </Fragment>
