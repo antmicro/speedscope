@@ -18,7 +18,8 @@ import {ActiveProfileState} from '../app-state/active-profile-state'
 import {FlamechartSearchContextProvider} from './flamechart-search-view'
 import {Theme, useTheme} from './themes/theme'
 import {FlamechartID, FlamechartViewState} from '../app-state/profile-group'
-import {profileGroupAtom} from '../app-state'
+import {metadataOnlyProfileAtom, profileGroupAtom} from '../app-state'
+import {useAtom} from '../lib/atom'
 
 interface FlamechartSetters {
   setLogicalSpaceViewportSize: (logicalSpaceViewportSize: Vec2) => void
@@ -114,6 +115,7 @@ export interface FlamechartViewContainerProps {
 export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) => {
   const {activeProfileState, glCanvas} = props
   const {profile, chronoViewState} = activeProfileState
+  const metadataOnlySt = useAtom(metadataOnlyProfileAtom);
 
   const theme = useTheme()
 
@@ -145,7 +147,7 @@ export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) =
         flamechartRenderer={flamechartRenderer}
         canvasContext={canvasContext}
         getCSSColorForFrame={getCSSColorForFrame}
-        enableTimestampPointer={true}
+        enableTimestampPointer={!metadataOnlySt}
         {...chronoViewState}
         {...setters}
       />
