@@ -71,14 +71,6 @@ export const customWelcomeMessagesAtom = new Atom<CustomWelcomeMessage>({}, 'wel
 interface ToolbarConfig {
   // The title of toolbar, displayed when no profile is loaded
   title?: string,
-  // Whether import button should be displayed
-  importButton?: boolean,
-  // Whether export button should be displayed
-  exportButton?: boolean,
-  // Whether theme button should be displayed
-  themeButton?: boolean,
-  // Whether help button should be displayed
-  helpButton?: boolean,
   // Whether importing with drag&drop should be enabled
   dragImport?: boolean,
 }
