@@ -6,6 +6,8 @@ import {ZIndex, Sizes} from './style'
 import {fuzzyMatchStrings} from '../lib/fuzzy-find'
 import {sortBy} from '../lib/utils'
 import {useTheme, withTheme} from './themes/theme'
+import SearchIcon from './icons/search'
+import CheckIcon from './icons/check'
 
 interface ProfileSelectRowProps {
   setProfileIndexToView: (profileIndex: number) => void
@@ -91,6 +93,7 @@ export function ProfileSelectRow({
         hovered && style.profileRowHovered,
       )}
     >
+      {selected ? <CheckIcon /> : <div style={{width: '16px'}}/>}
       <span
         className={css(style.profileIndex, selected && style.profileIndexSelected)}
         style={{width: maxDigits + 'em'}}
@@ -301,6 +304,7 @@ export function ProfileSelect({
         {/* We stop event propagation for key events on the input to prevent
             this from triggering keyboard shortcuts. */}
         <div className={css(style.filterInputContainer)}>
+          <SearchIcon />
           <input
             type="text"
             className={css(style.filterInput)}
@@ -313,6 +317,7 @@ export function ProfileSelect({
             onKeyPress={stopPropagation}
           />
         </div>
+        <div className={css(style.filterBorder)} />
         <div className={css(style.profileSelectScrolling)}>
           {filteredProfiles.map(({profile, matchedRanges, indexInProfileGroup}, indexInList) => {
             let ref: Ref<HTMLDivElement> | undefined = undefined
@@ -356,13 +361,16 @@ const getStyle = withTheme(theme =>
   StyleSheet.create({
     filterInputContainer: {
       display: 'flex',
-      flexDirection: 'column',
-      padding: 5,
-      alignItems: 'stretch',
+      flexDirection: 'row',
+      padding: '0px 8px',
+      alignItems: 'center',
+      gap: '6px',
     },
     filterInput: {
+      flexGrow: 1,
       color: theme.altFgPrimaryColor,
       background: theme.altBgSecondaryColor,
+      border: 'none',
       borderRadius: 5,
       padding: 5,
       ':focus': {
@@ -373,6 +381,10 @@ const getStyle = withTheme(theme =>
         color: theme.altFgPrimaryColor,
         background: theme.selectionPrimaryColor,
       },
+    },
+    filterBorder: {
+      margin: '4px 0',
+      borderTop: '1px solid var(--gray-850, #242424)',
     },
     caret: {
       width: 0,
@@ -392,19 +404,23 @@ const getStyle = withTheme(theme =>
       height: Sizes.FRAME_HEIGHT - 2,
       border: '1px solid transparent',
       textAlign: 'left',
-      paddingLeft: 10,
-      paddingRight: 10,
+      padding: '0px 8px',
       background: theme.altBgPrimaryColor,
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis',
       cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      color: 'var(--gray-250, #D5D5D5)'
     },
     profileRowHovered: {
-      border: `1px solid ${theme.selectionPrimaryColor}`,
+      backgroundColor: 'var(--gray-850, #242424)',
     },
     profileRowSelected: {
-      background: theme.selectionPrimaryColor,
+      color: 'var(--white, #FFFFFF)'
     },
     profileRowEven: {
       background: theme.altBgSecondaryColor,
@@ -437,6 +453,8 @@ const getStyle = withTheme(theme =>
       maxWidth: 480,
       margin: '0 auto',
       position: 'relative',
+      // shift by padding of toolbar and profile selector
+      left: '-8px',
       zIndex: ZIndex.PROFILE_SELECT,
       alignItems: 'center',
       display: 'flex',

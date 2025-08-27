@@ -12,6 +12,7 @@ import {toolbarConfigAtom, viewModeAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {colorSchemeAtom} from '../app-state/color-scheme'
 import {useAtom} from '../lib/atom'
+import ChevronDownIcon from './icons/chevron-down'
 
 interface ToolbarProps extends ApplicationProps {
   browseForFile(): void
@@ -22,7 +23,7 @@ function useSetViewMode(setViewMode: (viewMode: ViewMode) => void, viewMode: Vie
   return useCallback(() => setViewMode(viewMode), [setViewMode, viewMode])
 }
 
-function ToolbarLeftContent(props: ToolbarProps) {
+function ToolbarRightContent(props: ToolbarProps) {
   const style = getStyle(useTheme())
   const setChronoFlameChart = useSetViewMode(viewModeAtom.set, ViewMode.CHRONO_FLAME_CHART)
   const setLeftHeavyFlameGraph = useSetViewMode(viewModeAtom.set, ViewMode.LEFT_HEAVY_FLAME_GRAPH)
@@ -39,7 +40,7 @@ function ToolbarLeftContent(props: ToolbarProps) {
         )}
         onClick={setChronoFlameChart}
       >
-        <span className={css(style.emoji)}>🕰</span>Time Order
+        Time Order
       </div>
       <div
         className={css(
@@ -48,7 +49,7 @@ function ToolbarLeftContent(props: ToolbarProps) {
         )}
         onClick={setLeftHeavyFlameGraph}
       >
-        <span className={css(style.emoji)}>⬅️</span>Left Heavy
+        Left Heavy
       </div>
       <div
         className={css(
@@ -57,7 +58,7 @@ function ToolbarLeftContent(props: ToolbarProps) {
         )}
         onClick={setSandwichView}
       >
-        <span className={css(style.emoji)}>🥪</span>Sandwich
+        Sandwich
       </div>
     </div>
   )
@@ -87,7 +88,7 @@ const getCachedProfileList = (() => {
   }
 })()
 
-function ToolbarCenterContent(props: ToolbarProps): JSX.Element {
+function ToolbarLeftContent(props: ToolbarProps): JSX.Element {
   const style = getStyle(useTheme())
 
   const {activeProfileState, profileGroup} = props
@@ -134,11 +135,12 @@ function ToolbarCenterContent(props: ToolbarProps): JSX.Element {
     } else {
       return (
         <div className={css(style.toolbarCenter)} onMouseLeave={closeProfileSelect}>
-          <span onMouseOver={openProfileSelect}>
+          <span className={css(style.toolbarProfileName)} onMouseOver={openProfileSelect}>
             {activeProfileState.profile.getName()}{' '}
             <span className={css(style.toolbarProfileIndex)}>
               ({activeProfileState.index + 1}/{profileGroup.profiles.length})
             </span>
+            <ChevronDownIcon up={profileSelectShown} />
           </span>
           <div style={{display: profileSelectShown ? 'block' : 'none'}}>
             <ProfileSelect
@@ -156,59 +158,11 @@ function ToolbarCenterContent(props: ToolbarProps): JSX.Element {
   return <Fragment>{useAtom(toolbarConfigAtom).title ?? '🔬speedscope'}</Fragment>
 }
 
-function ToolbarRightContent(props: ToolbarProps) {
-  const style = getStyle(useTheme())
-  const colorScheme = useAtom(colorSchemeAtom)
-  const toolbarConfig = useAtom(toolbarConfigAtom);
-
-  const exportFile = (
-    <div className={css(style.toolbarTab)} onClick={props.saveFile}>
-      <span className={css(style.emoji)}>⤴️</span>Export
-    </div>
-  )
-  const importFile = (
-    <div className={css(style.toolbarTab)} onClick={props.browseForFile}>
-      <span className={css(style.emoji)}>⤵️</span>Import
-    </div>
-  )
-
-  const colorSchemeToggle = (
-    <div className={css(style.toolbarTab)} onClick={colorSchemeAtom.cycleToNextColorScheme}>
-      <span className={css(style.emoji)}>🎨</span>
-      <span className={css(style.toolbarTabColorSchemeToggle)}>
-        {colorSchemeToString(colorScheme)}
-      </span>
-    </div>
-  )
-
-  const help = (
-    <div className={css(style.toolbarTab)}>
-      <a
-        href="https://github.com/jlfwong/speedscope#usage"
-        className={css(style.noLinkStyle)}
-        target="_blank"
-      >
-        <span className={css(style.emoji)}>❓</span>Help
-      </a>
-    </div>
-  )
-
-  return (
-    <div className={css(style.toolbarRight)}>
-      {(toolbarConfig.exportButton ?? true) && props.activeProfileState && exportFile}
-      {(toolbarConfig.importButton ?? true) && importFile}
-      {(toolbarConfig.themeButton ?? true) && colorSchemeToggle}
-      {(toolbarConfig.helpButton ?? true) && help}
-    </div>
-  )
-}
-
 export function Toolbar(props: ToolbarProps) {
   const style = getStyle(useTheme())
   return (
     <div className={css(style.toolbar)}>
       <ToolbarLeftContent {...props} />
-      <ToolbarCenterContent {...props} />
       <ToolbarRightContent {...props} />
     </div>
   )
@@ -217,7 +171,8 @@ export function Toolbar(props: ToolbarProps) {
 const getStyle = withTheme(theme =>
   StyleSheet.create({
     toolbar: {
-      height: Sizes.TOOLBAR_HEIGHT,
+      height: Sizes.TOOLBAR_HEIGHT - 1,
+      border: '1px solid var(--gray-750, #2D2D2D)',
       flexShrink: 0,
       background: theme.altBgPrimaryColor,
       color: theme.altFgPrimaryColor,
@@ -226,19 +181,29 @@ const getStyle = withTheme(theme =>
       fontSize: FontSize.TITLE,
       lineHeight: `${Sizes.TOOLBAR_TAB_HEIGHT}px`,
       userSelect: 'none',
+      padding: '2px 4px',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
     },
     toolbarLeft: {
-      position: 'absolute',
-      height: Sizes.TOOLBAR_HEIGHT,
+      height: 'fit-content',
       overflow: 'hidden',
-      top: 0,
-      left: 0,
       marginRight: 2,
-      textAlign: 'left',
+      textAlign: 'center',
+      border: '1px solid var(--gray-850, #242424)',
+      borderRadius: '4px',
     },
     toolbarCenter: {
-      paddingTop: 1,
-      height: Sizes.TOOLBAR_HEIGHT,
+      padding: '2px 4px',
+      height: '22px',
+      textAlign: 'left',
+    },
+    toolbarProfileName: {
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: '7px',
     },
     toolbarRight: {
       height: Sizes.TOOLBAR_HEIGHT,
@@ -254,17 +219,17 @@ const getStyle = withTheme(theme =>
     },
     toolbarTab: {
       background: theme.altBgSecondaryColor,
-      marginTop: Sizes.SEPARATOR_HEIGHT,
       height: Sizes.TOOLBAR_TAB_HEIGHT,
       lineHeight: `${Sizes.TOOLBAR_TAB_HEIGHT}px`,
-      paddingLeft: 2,
-      paddingRight: 8,
       display: 'inline-block',
-      marginLeft: 2,
+      padding: '0px 8px',
       transition: `all ${Duration.HOVER_CHANGE} ease-in`,
       ':hover': {
         background: theme.selectionSecondaryColor,
       },
+      ':not(:first-child)': {
+        borderLeft: '1px solid var(--gray-850, #242424)',
+      }
     },
     toolbarTabActive: {
       background: theme.selectionPrimaryColor,
