@@ -171,7 +171,7 @@ const getStyle = withTheme(theme =>
   StyleSheet.create({
     toolbar: {
       height: Sizes.TOOLBAR_HEIGHT - 1,
-      border: '1px solid var(--gray-750, #2D2D2D)',
+      border: '1px solid var(--colors-gray-2, #2D2D2D)',
       flexShrink: 0,
       background: theme.altBgPrimaryColor,
       color: theme.altFgPrimaryColor,
@@ -181,28 +181,33 @@ const getStyle = withTheme(theme =>
       lineHeight: `${Sizes.TOOLBAR_TAB_HEIGHT}px`,
       userSelect: 'none',
       padding: '2px 4px',
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
     },
     toolbarLeft: {
       height: 'fit-content',
       overflow: 'hidden',
+      margin: 'auto 0',
       marginRight: 2,
       textAlign: 'center',
-      border: '1px solid var(--gray-850, #242424)',
+      border: '1px solid var(--colors-gray-1, #242424)',
       borderRadius: '4px',
+      position: 'absolute',
+      right: 0,
+      top: (Sizes.TOOLBAR_HEIGHT - Sizes.TOOLBAR_TAB_HEIGHT) / 2 + 1.5,
     },
     toolbarCenter: {
       padding: '2px 4px',
       height: '22px',
       textAlign: 'left',
+      position: 'relative',
+      left: 0,
     },
     toolbarProfileName: {
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       gap: '7px',
+      height: '100%',
+      whiteSpace: 'nowrap',
     },
     toolbarRight: {
       height: Sizes.TOOLBAR_HEIGHT,
@@ -227,7 +232,7 @@ const getStyle = withTheme(theme =>
         background: theme.selectionSecondaryColor,
       },
       ':not(:first-child)': {
-        borderLeft: '1px solid var(--gray-850, #242424)',
+        borderLeft: '1px solid var(--colors-gray-1, #242424)',
       }
     },
     toolbarTabActive: {

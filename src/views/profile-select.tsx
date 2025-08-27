@@ -384,7 +384,7 @@ const getStyle = withTheme(theme =>
     },
     filterBorder: {
       margin: '4px 0',
-      borderTop: '1px solid var(--gray-850, #242424)',
+      borderTop: '1px solid var(--colors-gray-1, #242424)',
     },
     caret: {
       width: 0,
@@ -414,13 +414,13 @@ const getStyle = withTheme(theme =>
       flexDirection: 'row',
       alignItems: 'center',
       gap: 10,
-      color: 'var(--gray-250, #D5D5D5)'
+      color: 'var(--colors-gray-6, #D5D5D5)'
     },
     profileRowHovered: {
-      backgroundColor: 'var(--gray-850, #242424)',
+      backgroundColor: 'var(--colors-gray-1, #242424)',
     },
     profileRowSelected: {
-      color: 'var(--white, #FFFFFF)'
+      color: 'var(--colors-white, #FFFFFF)'
     },
     profileRowEven: {
       background: theme.altBgSecondaryColor,
@@ -452,9 +452,10 @@ const getStyle = withTheme(theme =>
       width: '100%',
       maxWidth: 480,
       margin: '0 auto',
-      position: 'relative',
+      position: 'absolute',
       // shift by padding of toolbar and profile selector
-      left: '-8px',
+      top: 'calc(100% - 3px)',
+      left: '-4px',
       zIndex: ZIndex.PROFILE_SELECT,
       alignItems: 'center',
       display: 'flex',
