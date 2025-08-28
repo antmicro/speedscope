@@ -194,17 +194,6 @@ function convertToEventQueues(events: ImportableTraceEvent[]): [BTraceEvent[], E
   const beginEvents: BTraceEvent[] = []
   const endEvents: ETraceEvent[] = []
 
-  // Rebase all of the timestamps on the lowest timestamp
-  if (events.length > 0) {
-    let firstTs = Number.MAX_SAFE_INTEGER
-    for (let ev of events) {
-      firstTs = Math.min(firstTs, ev.ts)
-    }
-    for (let ev of events) {
-      ev.ts -= firstTs
-    }
-  }
-
   // Next, combine B, E, and X events into two timestamp ordered queues.
   const xEvents: XTraceEvent[] = []
   for (let ev of events) {
