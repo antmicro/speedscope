@@ -6,6 +6,7 @@ import { VNode } from 'preact'
 import { MutableRef } from 'preact/hooks'
 import { Application } from '../views/application'
 import { HoveredPoint } from '../lib/utils'
+import { CallTreeNode, Frame } from '../lib/profile'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -86,6 +87,12 @@ export const appRefAtom = new Atom<MutableRef<Application | undefined> | null>(n
 
 // The coordinates of hovered point
 export const timestampHoveredAtom = new Atom<HoveredPoint | null>(null, 'timestampHovered');
+
+// The hovered Frame or CallTreeNode
+export const hoveredAtom = new Atom<Frame | CallTreeNode | null>(null, 'hovered');
+
+// The selected Frame or CallTreeNode
+export const selectedAtom = new Atom<Frame | CallTreeNode | null>(null, 'selected');
 
 export enum SortField {
   SYMBOL_NAME,
