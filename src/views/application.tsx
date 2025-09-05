@@ -202,7 +202,12 @@ export class Application extends StatelessComponent<ApplicationProps> {
       return
     } else if (profileGroup.profiles.length === 0) {
       // Profile with only metadata loaded - creates artificial empty profile
-      const maxTs = Math.max(...(metadataAtom.get()?.map(v => v.ts).filter(Boolean) ?? [1]))
+      const timestamps =
+        metadataAtom
+          .get()
+          ?.map(v => v.ts)
+          .filter(Boolean) ?? []
+      const maxTs = Math.max(...(timestamps.length ? timestamps : [1]))
       metadataOnlyProfileAtom.set(true);
       const p = new CallTreeProfileBuilder(maxTs)
       const frameInfo = {key: 'no_trace', name: ''}
