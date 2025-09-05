@@ -207,6 +207,7 @@ const getStyle = withTheme(theme =>
       alignItems: 'center',
       gap: '7px',
       height: '100%',
+      width: 'fit-content',
       whiteSpace: 'nowrap',
     },
     toolbarRight: {
