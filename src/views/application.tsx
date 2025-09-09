@@ -434,10 +434,16 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
-  browseForFile = () => {
+  browseForFile = (callback?: () => void, onabort?: () => void) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.addEventListener('change', this.onFileSelect)
+    if (onabort) {
+      input.addEventListener('cancel', (_e) => onabort())
+    }
+    input.addEventListener('change', (e) => {
+      this.onFileSelect(e)
+      if (callback) {callback()}
+    })
     input.click()
   }
 
