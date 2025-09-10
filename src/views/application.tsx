@@ -526,6 +526,10 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
+  redrawCanvas = () => {
+    this.glCanvasRef.current?.onWindowResize();
+  }
+
   renderLanding() {
     const style = this.getStyle()
 
