@@ -331,7 +331,7 @@ export namespace WebGL {
     constructor(canvas: HTMLCanvasElement = document.createElement('canvas')) {
       super()
       let gl = canvas.getContext('webgl', {
-        alpha: false,
+        alpha: true,
         antialias: false,
         depth: false,
         preserveDrawingBuffer: false,
