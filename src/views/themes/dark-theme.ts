@@ -58,6 +58,8 @@ export const darkTheme: Theme = {
   selectionPrimaryColor: Colors.BLUE,
   selectionSecondaryColor: Colors.PALE_BLUE,
 
+  bgCanvas: Colors.OFF_BLACK,
+
   weightColor: Colors.GREEN,
 
   searchMatchTextColor: Colors.DARKER_GRAY,

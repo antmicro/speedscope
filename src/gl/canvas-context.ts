@@ -56,7 +56,7 @@ export class CanvasContext {
   private onBeforeFrame = () => {
     this.animationFrameRequest = null
     this.gl.setViewport(0, 0, this.gl.renderTargetWidthInPixels, this.gl.renderTargetHeightInPixels)
-    const color = Color.fromCSSHex(this.theme.bgPrimaryColor)
+    const color = Color.fromCSSHex(this.theme.bgCanvas)
     this.gl.clear(new Graphics.Color(color.r, color.g, color.b, color.a))
 
     for (const handler of this.beforeFrameHandlers) {

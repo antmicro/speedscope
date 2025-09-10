@@ -22,6 +22,8 @@ export interface Theme {
   selectionPrimaryColor: string
   selectionSecondaryColor: string
 
+  bgCanvas: string
+
   weightColor: string
 
   searchMatchTextColor: string
