@@ -782,7 +782,22 @@ export function isTraceEventFormatted(rawProfile: any): rawProfile is Trace {
   return isTraceEventObject(rawProfile) || isTraceEventList(rawProfile)
 }
 
+function convertTsToNumbers(traceEvents: TraceEvent[]) {
+  return traceEvents.map(e => {
+    if (typeof e.ts === "number") return e
+    e.ts = parseFloat(e.ts)
+    return e
+  })
+}
+
 export function importTraceEvents(rawProfile: Trace): ProfileGroup {
+  // Make sure timestamps are numbers
+  if ("traceEvents" in rawProfile) {
+    rawProfile.traceEvents = convertTsToNumbers(rawProfile.traceEvents)
+  } else {
+    rawProfile = convertTsToNumbers(rawProfile)
+  }
+
   if (isTraceEventWithSamples(rawProfile)) {
     return sampleListToProfileGroup(rawProfile)
   } else if (isTraceEventObject(rawProfile)) {
