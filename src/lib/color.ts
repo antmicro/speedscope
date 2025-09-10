@@ -35,16 +35,21 @@ export class Color {
   }
 
   static fromCSSHex(hex: string) {
-    if (hex.length !== 7 || hex[0] !== '#') {
+    const len = hex.length
+    if ((len !== 7 && len !== 9) || hex[0] !== '#') {
       throw new Error(`Invalid color input ${hex}`)
     }
-    const r = parseInt(hex.substr(1, 2), 16) / 255
-    const g = parseInt(hex.substr(3, 2), 16) / 255
-    const b = parseInt(hex.substr(5, 2), 16) / 255
+    const r = parseInt(hex.slice(1, 3), 16) / 255
+    const g = parseInt(hex.slice(3, 5), 16) / 255
+    const b = parseInt(hex.slice(5, 7), 16) / 255
+    let a = 1
+    if (len === 9) {
+      a = parseInt(hex.slice(7, 9), 16) / 255
+    }
     if (r < 0 || r > 1 || g < 0 || g > 1 || b < 0 || b > 1) {
       throw new Error(`Invalid color input ${hex}`)
     }
-    return new Color(r, g, b)
+    return new Color(r, g, b, a)
   }
 
   withAlpha(a: number): Color {
