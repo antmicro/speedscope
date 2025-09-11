@@ -330,7 +330,7 @@ export const ProfileTableView = memo(
 const getStyle = withTheme(theme =>
   StyleSheet.create({
     profileTableView: {
-      background: theme.bgPrimaryColor,
+      background: theme.altBgPrimaryColor,
       height: '100%',
     },
     scrollView: {
@@ -352,13 +352,14 @@ const getStyle = withTheme(theme =>
     tableView: {
       width: '100%',
       fontSize: FontSize.LABEL,
-      background: theme.bgPrimaryColor,
+      background: theme.altBgPrimaryColor,
     },
     tableHeader: {
       borderBottom: `2px solid ${theme.bgSecondaryColor}`,
       textAlign: 'left',
       color: theme.fgPrimaryColor,
       userSelect: 'none',
+      background: theme.bgPrimaryColor,
     },
     sortIcon: {
       position: 'relative',
@@ -366,7 +367,7 @@ const getStyle = withTheme(theme =>
       marginRight: Sizes.FRAME_HEIGHT / 4,
     },
     tableRow: {
-      background: theme.bgPrimaryColor,
+      background: theme.altBgPrimaryColor,
       height: Sizes.FRAME_HEIGHT,
     },
     tableRowEven: {

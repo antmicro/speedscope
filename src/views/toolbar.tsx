@@ -171,7 +171,8 @@ const getStyle = withTheme(theme =>
   StyleSheet.create({
     toolbar: {
       height: Sizes.TOOLBAR_HEIGHT - 1,
-      border: '1px solid var(--colors-gray-2, #2D2D2D)',
+      borderTop: '1px solid var(--colors-gray-2, #2D2D2D)',
+      borderBottom: '1px solid var(--colors-gray-2, #2D2D2D)',
       flexShrink: 0,
       background: theme.altBgPrimaryColor,
       color: theme.altFgPrimaryColor,
