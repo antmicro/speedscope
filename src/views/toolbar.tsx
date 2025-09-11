@@ -130,7 +130,13 @@ function ToolbarLeftContent(props: ToolbarProps): JSX.Element {
 
   if (activeProfileState && profileGroup && profiles) {
     if (profileGroup.profiles.length === 1) {
-      return <Fragment>{activeProfileState.profile.getName()}</Fragment>
+      return (
+        <div className={css(style.toolbarCenter)}>
+          <div className={css(style.toolbarProfileName)}>
+            {activeProfileState.profile.getName()} (1/1)
+          </div>
+        </div>
+      )
     } else {
       return (
         <div className={css(style.toolbarCenter)} onMouseLeave={closeProfileSelect}>
