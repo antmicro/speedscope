@@ -224,7 +224,9 @@ export class Application extends StatelessComponent<ApplicationProps> {
         name: this.props.hashParams.title,
       }
     }
-    document.title = `${profileGroup.name} - speedscope`
+    if (toolbarConfigAtom.get()?.changeDocumentTile ?? true) {
+      document.title = `${profileGroup.name} - speedscope`
+    }
 
     if (this.props.hashParams.viewMode) {
       this.props.setViewMode(this.props.hashParams.viewMode)

@@ -74,6 +74,8 @@ interface ToolbarConfig {
   title?: string,
   // Whether importing with drag&drop should be enabled
   dragImport?: boolean,
+  // Whether documents title should be altered when trace is loaded
+  changeDocumentTile?: boolean
 }
 
 // The state indicating whether loaded profile contains only metadata
