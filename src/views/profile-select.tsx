@@ -299,7 +299,6 @@ export function ProfileSelect({
   // selected profile has changed.
   return (
     <div className={css(style.profileSelectOuter)}>
-      <div className={css(style.caret)} />
       <div className={css(style.profileSelectBox)}>
         {/* We stop event propagation for key events on the input to prevent
             this from triggering keyboard shortcuts. */}
@@ -315,6 +314,7 @@ export function ProfileSelect({
             onKeyDown={onFilterKeyUp}
             onKeyUp={stopPropagation}
             onKeyPress={stopPropagation}
+            onFocus={stopPropagation}
           />
         </div>
         <div className={css(style.filterBorder)} />
@@ -386,13 +386,6 @@ const getStyle = withTheme(theme =>
       margin: '4px 0',
       borderTop: '1px solid var(--colors-gray-1, #242424)',
     },
-    caret: {
-      width: 0,
-      height: 0,
-      borderLeft: '5px solid transparent',
-      borderRight: '5px solid transparent',
-      borderBottom: '5px solid black',
-    },
     highlighted: {
       background: theme.selectionSecondaryColor,
     },
@@ -454,12 +447,13 @@ const getStyle = withTheme(theme =>
       margin: '0 auto',
       position: 'absolute',
       // shift by padding of toolbar and profile selector
-      top: 'calc(100% - 3px)',
+      top: 'calc(100% + 1px)',
       left: '-4px',
       zIndex: ZIndex.PROFILE_SELECT,
       alignItems: 'center',
       display: 'flex',
       flexDirection: 'column',
+      border: '1px solid var(--colors-gray-1, #242424)'
     },
     profileIndex: {
       textAlign: 'right',
