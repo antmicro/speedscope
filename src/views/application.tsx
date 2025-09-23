@@ -195,10 +195,12 @@ export class Application extends StatelessComponent<ApplicationProps> {
     if (profileGroup == null) {
       alert('Unrecognized format! See documentation about supported formats.')
       this.props.setLoading(false)
+      this.props.setError(true)
       return
     } else if (profileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
       alert("Successfully imported profile, but it's empty!")
       this.props.setLoading(false)
+      this.props.setError(true)
       return
     } else if (profileGroup.profiles.length === 0) {
       // Profile with only metadata loaded - creates artificial empty profile
@@ -249,6 +251,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
     setTimeout(() => {
       if (!this.glCanvasRef.current) {
         console.warn("webGL colors will not be updated")
+        this.props.setError(true)
         return
       }
       // Update colors for webGL context, as it does not react on theme change
