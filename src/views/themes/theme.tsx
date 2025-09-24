@@ -102,8 +102,9 @@ export function ThemeProvider(props: {children: ComponentChildren}) {
   if (transparent) {
     // Copy the theme and override colors for flamegraph
     theme = Object.assign({}, theme)
-    theme.colorForBucket = () => new Color(0, 0, 0, 0)
-    theme.colorForBucketGLSL = `vec3 colorForBucket(float t) {return vec3(0, 0, 0);}`
+    const bgColor = Color.fromCSSHex("#1A1A1A")
+    theme.colorForBucket = () => bgColor
+    theme.colorForBucketGLSL = `vec3 colorForBucket(float t) {return vec3(${bgColor.r}, ${bgColor.g}, ${bgColor.b});}`
   }
   return <ThemeContext.Provider value={theme} children={props.children} />
 }
