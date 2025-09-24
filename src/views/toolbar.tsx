@@ -8,7 +8,7 @@ import {Profile} from '../lib/profile'
 import {objectsHaveShallowEquality} from '../lib/utils'
 import {useTheme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {toolbarConfigAtom, viewModeAtom} from '../app-state'
+import {metadataOnlyProfileAtom, toolbarConfigAtom, viewModeAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {useAtom} from '../lib/atom'
 import ChevronDownIcon from './icons/chevron-down'
@@ -133,7 +133,7 @@ function ToolbarLeftContent(props: ToolbarProps): JSX.Element {
       return (
         <div className={css(style.toolbarCenter)}>
           <div className={css(style.toolbarProfileName)}>
-            {activeProfileState.profile.getName()} (1/1)
+            {activeProfileState.profile.getName()} {metadataOnlyProfileAtom.get() ? '' : '(1/1)'}
           </div>
         </div>
       )
