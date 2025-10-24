@@ -20,7 +20,7 @@ import {FlamechartID} from '../app-state/profile-group'
 import {flattenRecursionAtom, glCanvasAtom} from '../app-state'
 import {useAtom} from '../lib/atom'
 
-const getInvertedCallerProfile = memoizeByShallowEquality(
+export const getInvertedCallerProfile = memoizeByShallowEquality(
   ({
     profile,
     frame,
