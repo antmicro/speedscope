@@ -52,6 +52,8 @@ export const canUseXHR = protocol === 'http:' || protocol === 'https:'
 export const isImmediatelyLoading = canUseXHR && hashParams.profileURL != null
 export const loadingAtom = new Atom<boolean>(isImmediatelyLoading, 'loading')
 
+export const loadingCallbacksAtom = new Atom<{onstart?: () => void, onabort?: () => void}>({}, 'loadingCallbacks')
+
 // True when the application is an error state, e.g. because the profile
 // imported was invalid.
 export const errorAtom = new Atom<boolean>(false, 'error')

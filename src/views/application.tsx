@@ -15,7 +15,7 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
@@ -439,15 +439,20 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
-  browseForFile = (callback?: () => void, onabort?: () => void) => {
+  browseForFile = (onstart?: () => void, onabort?: () => void) => {
     const input = document.createElement('input')
     input.type = 'file'
-    if (onabort) {
-      input.addEventListener('cancel', (_e) => onabort())
+    const callbacks = loadingCallbacksAtom.get();
+    if (callbacks.onabort || onabort) {
+      input.addEventListener('cancel', (_e) => {
+        if (onabort) { onabort() }
+        if (callbacks.onabort) { callbacks.onabort() }
+      })
     }
     input.addEventListener('change', (e) => {
       this.onFileSelect(e)
-      if (callback) {callback()}
+      if (onstart) {onstart()}
+      if (callbacks.onstart) {callbacks.onstart()}
     })
     input.click()
   }
