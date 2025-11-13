@@ -163,6 +163,7 @@ function partitionByPidTid<T extends {tid: number | string; pid: number | string
 function selectQueueToTakeFromNext(
   bEventQueue: BTraceEvent[],
   eEventQueue: ETraceEvent[],
+  last?: BTraceEvent,
 ): 'B' | 'E' {
   if (bEventQueue.length === 0 && eEventQueue.length === 0) {
     throw new Error('This method should not be given both queues empty')
@@ -179,15 +180,22 @@ function selectQueueToTakeFromNext(
   if (bts < ets) return 'B'
   if (ets < bts) return 'E'
 
-  // If we got here, the 'B' event queue and the 'E' event queue have events at
-  // the front with equal timestamps.
+  // bts === ets
+  // Specification does not define behavior for such case, the following
+  // heuristic is used:
 
-  // If the front of the 'E' queue matches the front of the 'B' queue by key,
-  // then it means we have a zero duration event. Process the 'B' queue first
-  // to ensure it opens before we try to close it.
-  //
-  // Otherwise, process the 'E' queue first.
-  return getEventId(bFront) === getEventId(eFront) ? 'B' : 'E'
+  // 1. If stack is empty => 'B'
+  const isEmptyStack = !last
+  if (isEmptyStack) return 'B'
+
+  // 2. If last event matches some 'E' event with the same 'ts' => 'E'
+  const ts = bts
+  const eEventCandidates = eEventQueue.filter((ev) => ts === ev.ts)
+  const existsMatchingEvent = eEventCandidates.some((ev) => getEventId(last) === getEventId(ev))
+  if (existsMatchingEvent) return 'E'
+
+  // 3. Otherwise => 'B'
+  return 'B'
 }
 
 function convertToEventQueues(events: ImportableTraceEvent[]): [BTraceEvent[], ETraceEvent[]] {
@@ -465,6 +473,8 @@ function eventListToProfile(
       console.warn(
         `ts=${e.ts}: Tried to end "${eFrameInfo.key}" when "${bFrameInfo.key}" was on the top of the stack. Ending ${bFrameInfo.key} instead.`,
       )
+    } else if (e.ts === b.ts) {
+      console.warn(`ts=${e.ts}: Zero-length event ${e.name}`)
     }
 
     frameStack.pop()
@@ -475,8 +485,9 @@ function eventListToProfile(
     profileBuilder.leaveFrame(bFrameInfo, e.ts)
   }
 
+
   while (bEventQueue.length > 0 || eEventQueue.length > 0) {
-    const queueName = selectQueueToTakeFromNext(bEventQueue, eEventQueue)
+    const queueName = selectQueueToTakeFromNext(bEventQueue, eEventQueue, lastOf(frameStack))
     switch (queueName) {
       case 'B': {
         enterFrame(bEventQueue.shift()!)
