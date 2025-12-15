@@ -69,7 +69,7 @@ export const dragActiveAtom = new Atom<boolean>(false, 'dragActive')
 // however, XHR will be unavailable to fetching files in adjacent directories.
 const protocol = window.location.protocol
 export const canUseXHR = protocol === 'http:' || protocol === 'https:'
-export const isImmediatelyLoading = canUseXHR && hashParams.profileURL != null
+export const isImmediatelyLoading = (canUseXHR && hashParams.profileURL != null) || (!canUseXHR && hashParams.localProfilePath != null)
 export const loadingAtom = new Atom<boolean>(isImmediatelyLoading, 'loading')
 
 export const loadingCallbacksAtom = new Atom<{onstart?: () => void, onabort?: () => void}>({}, 'loadingCallbacks')
