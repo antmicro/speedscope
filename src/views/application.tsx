@@ -39,7 +39,7 @@ async function importProfilesFromText(
   return (await importModule).importProfileGroupFromText(fileName, contents)
 }
 
-async function importProfilesFromBase64(
+export async function importProfilesFromBase64(
   fileName: string,
   contents: string,
 ): Promise<ProfileGroup | null> {
@@ -173,7 +173,7 @@ export type ApplicationProps = {
 export class Application extends StatelessComponent<ApplicationProps> {
   glCanvasRef = createRef<GLCanvas>()
 
-  private async loadProfile(loader: () => Promise<ProfileGroup | null>) {
+  public async loadProfile(loader: () => Promise<ProfileGroup | null>) {
     this.props.setError(false)
     this.props.setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 0))
