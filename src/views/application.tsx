@@ -182,9 +182,9 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     console.time('import')
 
-    let profileGroup: ProfileGroup | null = null
+    let newProfileGroup: ProfileGroup | null = null
     try {
-      profileGroup = await loader()
+      newProfileGroup = await loader()
     } catch (e) {
       console.log('Failed to load format', e)
       this.props.setError(true)
@@ -192,17 +192,17 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
 
     // TODO(jlfwong): Make these into nicer overlays
-    if (profileGroup == null) {
+    if (newProfileGroup == null) {
       alert('Unrecognized format! See documentation about supported formats.')
       this.props.setLoading(false)
       this.props.setError(true)
       return
-    } else if (profileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
+    } else if (newProfileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
       alert("Successfully imported profile, but it's empty!")
       this.props.setLoading(false)
       this.props.setError(true)
       return
-    } else if (profileGroup.profiles.length === 0) {
+    } else if (newProfileGroup.profiles.length === 0) {
       // Profile with only metadata loaded - creates artificial empty profile
       const timestamps =
         metadataAtom
@@ -215,41 +215,48 @@ export class Application extends StatelessComponent<ApplicationProps> {
       const frameInfo = {key: 'no_trace', name: ''}
       p.enterFrame(frameInfo, 0)
       p.leaveFrame(frameInfo, maxTs)
-      profileGroup.profiles.push(p.build());
+      newProfileGroup.profiles.push(p.build())
     } else {
       metadataOnlyProfileAtom.set(false);
     }
-    const groupName = profileGroup.name || "Unknown profile"
-    profileGroup.profiles.forEach(profile => {
+    const groupName = newProfileGroup.name || "Unknown profile"
+    newProfileGroup.profiles.forEach(profile => {
       profile.setGroupName(groupName)
     })
 
+    let finalGroup: ProfileGroup
+    const existingGroup = this.props.profileGroup
+    if (existingGroup) {
+      const existingProfiles = existingGroup.profiles.map(state => state.profile)
+      const combinedProfiles = [...existingProfiles , ...newProfileGroup.profiles]
+
+      finalGroup = {
+        name: "Combined Traces",
+        profiles: combinedProfiles,
+        indexToView: existingProfiles.length
+      };
+    } else {
+      finalGroup = newProfileGroup
+    }
+
+    for (let profile of finalGroup.profiles) {
+      await profile.demangle()
+    }
+
     if (this.props.hashParams.title) {
-      profileGroup = {
-        ...profileGroup,
+      finalGroup = {
+        ...finalGroup,
         name: this.props.hashParams.title,
       }
     }
+
     if (toolbarConfigAtom.get()?.changeDocumentTile ?? true) {
-      document.title = `${profileGroup.name} - speedscope`
+      document.title = `${finalGroup.name} - speedscope`
     }
 
     if (this.props.hashParams.viewMode) {
       this.props.setViewMode(this.props.hashParams.viewMode)
     }
-
-    for (let profile of profileGroup.profiles) {
-      await profile.demangle()
-    }
-
-    profileGroup.profiles.forEach((profile, i) => {
-      const title = this.props.hashParams.title || profile.getName()
-      profile.setName(title)
-      // By default select profile named as "main"
-      if (title.startsWith("main (")) {
-        profileGroup.indexToView = i;
-      }
-    })
 
     console.timeEnd('import')
     setTimeout(() => {
@@ -262,7 +269,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
       this.glCanvasRef.current.props.canvasContext?.flamechartColorPassRenderer.updateMaterial(this.glCanvasRef.current.props.canvasContext.gl, this.props.theme)
     })
 
-    this.props.setProfileGroup(profileGroup)
+    this.props.setProfileGroup(finalGroup)
     this.props.setLoading(false)
   }
 
