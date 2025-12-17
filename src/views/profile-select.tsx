@@ -8,6 +8,7 @@ import {sortBy} from '../lib/utils'
 import {useTheme, withTheme} from './themes/theme'
 import SearchIcon from './icons/search'
 import CheckIcon from './icons/check'
+import { getGroupNames } from '../app-state/group-names'
 
 interface ProfileSelectRowProps {
   setProfileIndexToView: (profileIndex: number) => void
@@ -67,7 +68,9 @@ export function ProfileSelectRow({
     [setHoveredProfileIndex, indexInProfileGroup],
   )
 
-  const name = profile.getName()
+  const name = getGroupNames().length > 1
+      ? `${profile.getName()} - ${profile.getGroupName()}`
+      : profile.getName();
 
   const maxDigits = 1 + Math.floor(Math.log10(profileCount))
 
@@ -443,7 +446,7 @@ const getStyle = withTheme(theme =>
     },
     profileSelectOuter: {
       width: '100%',
-      maxWidth: 480,
+      maxWidth: 600,
       margin: '0 auto',
       position: 'absolute',
       // shift by padding of toolbar and profile selector

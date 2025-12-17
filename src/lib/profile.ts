@@ -122,6 +122,8 @@ export interface ProfileGroup {
 export class Profile {
   protected name: string = ''
 
+  protected groupName: string = ''
+
   protected totalWeight: number
 
   protected frames = new KeyedSet<Frame>()
@@ -175,6 +177,14 @@ export class Profile {
   }
   setName(name: string) {
     this.name = name
+  }
+
+  getGroupName() {
+    return this.groupName
+  }
+
+  setGroupName(groupName: string) {
+    this.groupName = groupName
   }
 
   getTotalWeight() {

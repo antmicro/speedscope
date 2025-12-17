@@ -219,6 +219,10 @@ export class Application extends StatelessComponent<ApplicationProps> {
     } else {
       metadataOnlyProfileAtom.set(false);
     }
+    const groupName = profileGroup.name || "Unknown profile"
+    profileGroup.profiles.forEach(profile => {
+      profile.setGroupName(groupName)
+    })
 
     if (this.props.hashParams.title) {
       profileGroup = {
