@@ -182,6 +182,8 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     console.time('import')
 
+    const existingMetadata = metadataAtom.get() || []
+
     let newProfileGroup: ProfileGroup | null = null
     try {
       newProfileGroup = await loader()
@@ -219,6 +221,11 @@ export class Application extends StatelessComponent<ApplicationProps> {
     } else {
       metadataOnlyProfileAtom.set(false);
     }
+
+    const newMetadata = metadataAtom.get() || [];
+    const combinedMetadata = [...existingMetadata, ...newMetadata]
+    metadataAtom.set(combinedMetadata)
+
     const groupName = newProfileGroup.name || "Unknown profile"
     newProfileGroup.profiles.forEach(profile => {
       profile.setGroupName(groupName)
