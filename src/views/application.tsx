@@ -15,7 +15,7 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom, combineTracesAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
@@ -182,7 +182,9 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     console.time('import')
 
-    const existingMetadata = metadataAtom.get() || []
+    const combineMode = combineTracesAtom.get()
+
+    const existingMetadata = combineMode ? (metadataAtom.get() || []) : []
 
     let newProfileGroup: ProfileGroup | null = null
     try {
@@ -223,8 +225,11 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
 
     const newMetadata = metadataAtom.get() || [];
-    const combinedMetadata = [...existingMetadata, ...newMetadata]
-    metadataAtom.set(combinedMetadata)
+    if (combineMode) {
+      metadataAtom.set([...existingMetadata, ...newMetadata])
+    } else {
+      metadataAtom.set(newMetadata)
+    }
 
     const groupName = newProfileGroup.name || "Unknown profile"
     newProfileGroup.profiles.forEach(profile => {
@@ -233,7 +238,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     let finalGroup: ProfileGroup
     const existingGroup = this.props.profileGroup
-    if (existingGroup) {
+    if (combineMode && existingGroup) {
       const existingProfiles = existingGroup.profiles.map(state => state.profile)
       const combinedProfiles = [...existingProfiles , ...newProfileGroup.profiles]
 

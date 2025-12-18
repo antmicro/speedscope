@@ -28,6 +28,9 @@ export const profileGroupAtom = new ProfileGroupAtom(null, 'profileGroup')
 // The selected Frame or CallTreeNode
 export const selectedAtom = new Atom<Frame | CallTreeNode | null>(null, 'selected');
 
+// Option contorling whether traces should be combined or overwritten
+export const combineTracesAtom = new Atom<boolean>(false, 'combineTracesAtom')
+
 viewModeAtom.subscribe(() => {
   // If we switch views, the hover information is no longer relevant
   profileGroupAtom.clearHoverNode()
