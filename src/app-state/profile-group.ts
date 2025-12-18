@@ -47,6 +47,9 @@ export interface Metadata {
   // The name of the event, as displayed in Trace Viewer
   name?: string
 
+  // The name of the group the event is a part of
+  groupName?: string
+
   // The event categories. This is a comma separated list of categories for the event. The categories can be used to hide events in the Trace Viewer UI.
   cat?: string
 

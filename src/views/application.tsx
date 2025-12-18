@@ -224,14 +224,19 @@ export class Application extends StatelessComponent<ApplicationProps> {
       metadataOnlyProfileAtom.set(false);
     }
 
+    const groupName = newProfileGroup.name || "Unknown profile"
+
     const newMetadata = metadataAtom.get() || [];
+    newMetadata.forEach(metadata => {
+      metadata.groupName = groupName
+    })
+
     if (combineMode) {
       metadataAtom.set([...existingMetadata, ...newMetadata])
     } else {
       metadataAtom.set(newMetadata)
     }
 
-    const groupName = newProfileGroup.name || "Unknown profile"
     newProfileGroup.profiles.forEach(profile => {
       profile.setGroupName(groupName)
     })
