@@ -295,7 +295,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
   }
 
   loadFromFile(file: File) {
-    this.loadProfile(async () => {
+    return this.loadProfile(async () => {
       const profiles = await importProfilesFromFile(file)
       if (profiles) {
         for (let profile of profiles.profiles) {
@@ -383,10 +383,13 @@ export class Application extends StatelessComponent<ApplicationProps> {
     this.loadDropFile(ev);
   }
 
-  loadDropFile = (ev: DragEvent) => {
+  loadDropFile = async (ev: DragEvent) => {
     if (!ev.dataTransfer) return
-    const firstItem = ev.dataTransfer.items[0]
-    if (firstItem && 'webkitGetAsEntry' in firstItem) {
+    const items = ev.dataTransfer.items
+    const files = ev.dataTransfer.files
+    const firstItem = items[0]
+
+    if (items.length > 0 && 'webkitGetAsEntry' in firstItem) {
       const webkitEntry: FileSystemEntry | null = firstItem.webkitGetAsEntry()
 
       // Instrument.app file format is actually a directory.
@@ -407,12 +410,24 @@ export class Application extends StatelessComponent<ApplicationProps> {
       console.warn("Drag&drop has not provided any items");
     }
 
-    let file: File | null = ev.dataTransfer.files.item(0)
-    if (file) {
-      console.log("importing from file", file);
-      this.loadFromFile(file)
+    if (files.length > 0) {
+      const fileList = Array.from(files)
+      const originalCombineMode = combineTracesAtom.get()
+
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i]
+
+        if (i > 0) {
+          combineTracesAtom.set(true)
+        }
+
+        await this.loadFromFile(file)
+      }
+
+      combineTracesAtom.set(originalCombineMode)
+
     } else {
-      console.warn("Drag&drop has not provided any files");
+        console.warn("Drag&drop has not provided any files")
     }
   }
 
@@ -470,6 +485,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
   browseForFile = (onstart?: () => void, onabort?: () => void) => {
     const input = document.createElement('input')
     input.type = 'file'
+    input.multiple = true
     const callbacks = loadingCallbacksAtom.get();
     if (callbacks.onabort || onabort) {
       input.addEventListener('cancel', (_e) => {
@@ -557,11 +573,24 @@ export class Application extends StatelessComponent<ApplicationProps> {
     }
   }
 
-  onFileSelect = (ev: Event) => {
-    const file = (ev.target as HTMLInputElement).files!.item(0)
-    if (file) {
-      this.loadFromFile(file)
+  onFileSelect = async (ev: Event) => {
+    const files = (ev.target as HTMLInputElement).files
+    if (!files || files.length === 0) return
+
+    const fileList = Array.from(files)
+    const orginalCombineMode = combineTracesAtom.get()
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i]
+      if (i > 0) {
+        combineTracesAtom.set(true)
+      }
+
+      await this.loadFromFile(file)
     }
+
+    combineTracesAtom.set(orginalCombineMode)
+
   }
 
   redrawCanvas = () => {
