@@ -54,7 +54,8 @@ export function ProfileSelectRow({
   matchedRanges,
   indexInFilteredListView,
 }: ProfileSelectRowProps) {
-  const style = getStyle(useTheme())
+  const groupCount = getGroupNames().length
+  const style = getStyle(useTheme())(groupCount)
 
   const onMouseUp = useCallback(() => {
     closeProfileSelect()
@@ -68,7 +69,7 @@ export function ProfileSelectRow({
     [setHoveredProfileIndex, indexInProfileGroup],
   )
 
-  const name = getGroupNames().length > 1
+  const name = groupCount > 1
       ? `${profile.getName()} - ${profile.getGroupName()}`
       : profile.getName();
 
@@ -150,7 +151,8 @@ export function ProfileSelect({
   visible,
   setProfileIndexToView,
 }: ProfileSelectProps) {
-  const style = getStyle(useTheme())
+  const groupCount = getGroupNames().length
+  const style = getStyle(useTheme())(groupCount)
 
   const [filterText, setFilterText] = useState('')
 
@@ -360,7 +362,7 @@ export function ProfileSelect({
 
 const paddingHeight = 10
 
-const getStyle = withTheme(theme =>
+const getStyle = withTheme(theme => (groupCount: number = 1) =>
   StyleSheet.create({
     filterInputContainer: {
       display: 'flex',
@@ -446,7 +448,7 @@ const getStyle = withTheme(theme =>
     },
     profileSelectOuter: {
       width: '100%',
-      maxWidth: 600,
+      maxWidth: groupCount > 1 ? 700 : 480,
       margin: '0 auto',
       position: 'absolute',
       // shift by padding of toolbar and profile selector
