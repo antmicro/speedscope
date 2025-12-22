@@ -8,7 +8,7 @@ import {sortBy} from '../lib/utils'
 import {useTheme, withTheme} from './themes/theme'
 import SearchIcon from './icons/search'
 import CheckIcon from './icons/check'
-import { getGroupNames } from '../app-state/group-names'
+import { getGroupNames } from '../app-state/utils'
 
 interface ProfileSelectRowProps {
   setProfileIndexToView: (profileIndex: number) => void
