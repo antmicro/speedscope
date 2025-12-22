@@ -15,7 +15,7 @@ import {Toolbar} from './toolbar'
 import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom, combineTracesAtom} from '../app-state'
+import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {HashParams} from '../lib/hash-params'
 import {StatelessComponent} from '../lib/preact-helpers'
@@ -173,7 +173,10 @@ export type ApplicationProps = {
 export class Application extends StatelessComponent<ApplicationProps> {
   glCanvasRef = createRef<GLCanvas>()
 
-  public async loadProfile(loader: () => Promise<ProfileGroup | null>) {
+  public async loadProfile(
+    loader: () => Promise<ProfileGroup | null>,
+    combineMode: boolean = false,
+  ) {
     this.props.setError(false)
     this.props.setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 0))
@@ -181,8 +184,6 @@ export class Application extends StatelessComponent<ApplicationProps> {
     if (!this.props.glCanvas) return
 
     console.time('import')
-
-    const combineMode = combineTracesAtom.get()
 
     const existingMetadata = combineMode ? (metadataAtom.get() || []) : []
 
@@ -294,7 +295,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
     return getStyle(this.props.theme)
   }
 
-  loadFromFile(file: File) {
+  loadFromFile(file: File, combineMode: boolean = false) {
     return this.loadProfile(async () => {
       const profiles = await importProfilesFromFile(file)
       if (profiles) {
@@ -358,7 +359,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
       }
 
       return null
-    })
+    }, combineMode)
   }
 
   loadExample = () => {
@@ -412,19 +413,13 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     if (files.length > 0) {
       const fileList = Array.from(files)
-      const originalCombineMode = combineTracesAtom.get()
 
       for (let i = 0; i < fileList.length; i++) {
+        const shouldCombine = i > 0
         const file = fileList[i]
 
-        if (i > 0) {
-          combineTracesAtom.set(true)
-        }
-
-        await this.loadFromFile(file)
+        await this.loadFromFile(file, shouldCombine)
       }
-
-      combineTracesAtom.set(originalCombineMode)
 
     } else {
         console.warn("Drag&drop has not provided any files")
@@ -578,19 +573,12 @@ export class Application extends StatelessComponent<ApplicationProps> {
     if (!files || files.length === 0) return
 
     const fileList = Array.from(files)
-    const orginalCombineMode = combineTracesAtom.get()
 
     for (let i = 0; i < fileList.length; i++) {
+      const shouldCombine = i > 0
       const file = fileList[i]
-      if (i > 0) {
-        combineTracesAtom.set(true)
-      }
-
-      await this.loadFromFile(file)
+      await this.loadFromFile(file, shouldCombine)
     }
-
-    combineTracesAtom.set(orginalCombineMode)
-
   }
 
   redrawCanvas = () => {
