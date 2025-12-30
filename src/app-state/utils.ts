@@ -35,3 +35,12 @@ export function getMetadataForGroup(groupName: string): Metadata[] {
 
     return metadata.flat().filter(event => event.groupName === groupName);
 }
+
+/**
+ * Returns all profile wrappers associated with a specific group name.
+ */
+export function getProfilesForGroup(groupName: string) {
+    const profiles = profileGroupAtom.get()?.profiles ?? [];
+
+    return profiles.filter(p => p.profile.getGroupName() === groupName);
+}
