@@ -1,4 +1,4 @@
-import { hoveredAtom, selectedAtom } from '.'
+import {hoveredAtom, metadataAtom, selectedAtom} from '.'
 import {Atom} from '../lib/atom'
 import {clamp, Rect, Vec2} from '../lib/math'
 import {CallTreeNode, Frame, Profile, ProfileGroup} from '../lib/profile'
@@ -94,6 +94,7 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
   }
 
   setProfileGroup = (group: ProfileGroup) => {
+    metadataAtom.set(group.metadata ?? [])
     this.set({
       name: group.name,
       indexToView: group.indexToView,

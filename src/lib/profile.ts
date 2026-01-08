@@ -1,6 +1,7 @@
 import {lastOf, KeyedSet} from './utils'
 import {ValueFormatter, RawValueFormatter} from './value-formatters'
 import {FileFormat} from './file-format-spec'
+import { Metadata } from '../app-state/profile-group'
 
 export interface FrameInfo {
   key: string | number
@@ -117,6 +118,7 @@ export interface ProfileGroup {
   name: string
   indexToView: number
   profiles: Profile[]
+  metadata?: Metadata[],
 }
 
 export class Profile {

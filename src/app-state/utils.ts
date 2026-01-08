@@ -17,23 +17,23 @@ import { Metadata } from "./profile-group"
  */
 export function getGroupNames(): string[] {
     const profiles = profileGroupAtom.get()?.profiles ?? [];
+    const profileNames = profiles.map(p => p.profile.getGroupName());
+    const metadataNames = metadataAtom.get()?.map(m => m.groupName ?? '') ?? [];
 
-    const names = profiles
-        .map(p => p.profile.getGroupName())
-        .filter((name): name is string => Boolean(name));
+    const names = profileNames.concat(metadataNames).filter((name): name is string => Boolean(name));
 
     return Array.from(new Set(names));
 }
 
 /**
- * Finds all metadata assosiated with a given group name.
+ * Finds all metadata associated with a given group name.
  */
 export function getMetadataForGroup(groupName: string): Metadata[] {
     const metadata = metadataAtom.get();
 
     if (!metadata) {return [];}
 
-    return metadata.flat().filter(event => event.groupName === groupName);
+    return metadata.filter(event => event.groupName === groupName);
 }
 
 /**

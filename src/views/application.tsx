@@ -4,23 +4,18 @@ import '../../assets/source-code-pro.css'
 import {createRef, h} from 'preact'
 import {StyleSheet, css} from 'aphrodite'
 
-import {CallTreeProfileBuilder, ProfileGroup, SymbolRemapper} from '../lib/profile'
 import {FontFamily, FontSize, Duration} from './style'
-import {importEmscriptenSymbolMap as importEmscriptenSymbolRemapper} from '../lib/emscripten'
-import {saveToFile} from '../lib/file-format'
 import {ActiveProfileState} from '../app-state/active-profile-state'
 import {LeftHeavyFlamechartView, ChronoFlamechartView} from './flamechart-view-container'
 import {CanvasContext} from '../gl/canvas-context'
 import {Toolbar} from './toolbar'
-import {importJavaScriptSourceMapSymbolRemapper} from '../lib/js-source-map'
 import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {canUseXHR, CustomWelcomeMessage, metadataAtom, toolbarConfigAtom, metadataOnlyProfileAtom, loadingCallbacksAtom} from '../app-state'
-import {ProfileGroupState} from '../app-state/profile-group'
-import {HashParams} from '../lib/hash-params'
+import {canUseXHR, CustomWelcomeMessage, metadataOnlyProfileAtom} from '../app-state'
 import {StatelessComponent} from '../lib/preact-helpers'
 import {SandwichViewContainer} from './sandwich-view'
-import { useAtom } from '../lib/atom'
+import {useAtom} from '../lib/atom'
+import {ProfileLoader, ProfileLoaderState} from '../lib/profile-loader'
 
 const importModule = import('../import')
 
@@ -31,40 +26,6 @@ const importModule = import('../import')
 importModule.then(() => {})
 import('../lib/demangle').then(() => {})
 import('source-map').then(() => {})
-
-async function importProfilesFromText(
-  fileName: string,
-  contents: string,
-): Promise<ProfileGroup | null> {
-  return (await importModule).importProfileGroupFromText(fileName, contents)
-}
-
-export async function importProfilesFromBase64(
-  fileName: string,
-  contents: string,
-): Promise<ProfileGroup | null> {
-  return (await importModule).importProfileGroupFromBase64(fileName, contents)
-}
-
-async function importProfilesFromArrayBuffer(
-  fileName: string,
-  contents: ArrayBuffer,
-): Promise<ProfileGroup | null> {
-  return (await importModule).importProfilesFromArrayBuffer(fileName, contents)
-}
-
-async function importProfilesFromFile(file: File): Promise<ProfileGroup | null> {
-  return (await importModule).importProfilesFromFile(file)
-}
-async function importFromFileSystemDirectoryEntry(entry: FileSystemDirectoryEntry) {
-  return (await importModule).importFromFileSystemDirectoryEntry(entry)
-}
-
-import exampleProfileURL from '../../sample/profiles/stackcollapse/perf-vertx-stacks-01-collapsed-all.txt'
-
-function isFileSystemDirectoryEntry(entry: FileSystemEntry): entry is FileSystemDirectoryEntry {
-  return entry != null && entry.isDirectory
-}
 
 interface GLCanvasProps {
   canvasContext: CanvasContext | null
@@ -147,22 +108,15 @@ export class GLCanvas extends StatelessComponent<GLCanvasProps> {
   }
 }
 
-export type ApplicationProps = {
+export interface ApplicationProps extends ProfileLoaderState {
   setGLCanvas: (canvas: HTMLCanvasElement | null) => void
-  setLoading: (loading: boolean) => void
-  setError: (error: boolean) => void
-  setProfileGroup: (profileGroup: ProfileGroup) => void
-  setDragActive: (dragActive: boolean) => void
-  setViewMode: (viewMode: ViewMode) => void
-  setFlattenRecursion: (flattenRecursion: boolean) => void
   setProfileIndexToView: (profileIndex: number) => void
+  setFlattenRecursion: (flattenRecursion: boolean) => void
   activeProfileState: ActiveProfileState | null
   canvasContext: CanvasContext | null
   theme: Theme
-  profileGroup: ProfileGroupState
   flattenRecursion: boolean
   viewMode: ViewMode
-  hashParams: HashParams
   dragActive: boolean
   loading: boolean
   glCanvas: HTMLCanvasElement | null
@@ -173,274 +127,31 @@ export type ApplicationProps = {
 export class Application extends StatelessComponent<ApplicationProps> {
   glCanvasRef = createRef<GLCanvas>()
 
-  public async loadProfile(
-    loader: () => Promise<ProfileGroup | null>,
-    combineMode: boolean = false,
-  ) {
-    this.props.setError(false)
-    this.props.setLoading(true)
-    await new Promise(resolve => setTimeout(resolve, 0))
-
-    if (!this.props.glCanvas) return
-
-    console.time('import')
-
-    const existingMetadata = combineMode ? (metadataAtom.get() || []) : []
-
-    let newProfileGroup: ProfileGroup | null = null
-    try {
-      newProfileGroup = await loader()
-    } catch (e) {
-      console.log('Failed to load format', e)
-      this.props.setError(true)
-      return
-    }
-
-    // TODO(jlfwong): Make these into nicer overlays
-    if (newProfileGroup == null) {
-      alert('Unrecognized format! See documentation about supported formats.')
-      this.props.setLoading(false)
-      this.props.setError(true)
-      return
-    } else if (newProfileGroup.profiles.length === 0 && (metadataAtom.get()?.length ?? 0) === 0) {
-      alert("Successfully imported profile, but it's empty!")
-      this.props.setLoading(false)
-      this.props.setError(true)
-      return
-    } else if (newProfileGroup.profiles.length === 0) {
-      // Profile with only metadata loaded - creates artificial empty profile
-      const timestamps =
-        metadataAtom
-          .get()
-          ?.map(v => v.ts)
-          .filter(Boolean) ?? []
-      const maxTs = Math.max(...(timestamps.length ? timestamps : [1]))
-      metadataOnlyProfileAtom.set(true);
-      const p = new CallTreeProfileBuilder(maxTs)
-      const frameInfo = {key: 'no_trace', name: ''}
-      p.enterFrame(frameInfo, 0)
-      p.leaveFrame(frameInfo, maxTs)
-      newProfileGroup.profiles.push(p.build())
-    } else {
-      metadataOnlyProfileAtom.set(false);
-    }
-
-    const groupName = newProfileGroup.name || "Unknown profile"
-
-    const newMetadata = metadataAtom.get() || [];
-    newMetadata.forEach(metadata => {
-      metadata.groupName = groupName
-    })
-
-    if (combineMode) {
-      metadataAtom.set([...existingMetadata, ...newMetadata])
-    } else {
-      metadataAtom.set(newMetadata)
-    }
-
-    newProfileGroup.profiles.forEach(profile => {
-      profile.setGroupName(groupName)
-    })
-
-    let finalGroup: ProfileGroup
-    const existingGroup = this.props.profileGroup
-    if (combineMode && existingGroup) {
-      const existingProfiles = existingGroup.profiles.map(state => state.profile)
-      const combinedProfiles = [...existingProfiles , ...newProfileGroup.profiles]
-
-      finalGroup = {
-        name: "Combined Traces",
-        profiles: combinedProfiles,
-        indexToView: existingProfiles.length
-      };
-    } else {
-      finalGroup = newProfileGroup
-    }
-
-    for (let profile of finalGroup.profiles) {
-      await profile.demangle()
-    }
-
-    if (this.props.hashParams.title) {
-      finalGroup = {
-        ...finalGroup,
-        name: this.props.hashParams.title,
-      }
-    }
-
-    if (toolbarConfigAtom.get()?.changeDocumentTile ?? true) {
-      document.title = `${finalGroup.name} - speedscope`
-    }
-
-    if (this.props.hashParams.viewMode) {
-      this.props.setViewMode(this.props.hashParams.viewMode)
-    }
-
-    console.timeEnd('import')
-    setTimeout(() => {
-      if (!this.glCanvasRef.current) {
-        console.warn("webGL colors will not be updated")
-        this.props.setError(true)
-        return
-      }
-      // Update colors for webGL context, as it does not react on theme change
-      this.glCanvasRef.current.props.canvasContext?.flamechartColorPassRenderer.updateMaterial(this.glCanvasRef.current.props.canvasContext.gl, this.props.theme)
-    })
-
-    this.props.setProfileGroup(finalGroup)
-    this.props.setLoading(false)
-  }
+  loader = new ProfileLoader(this.props)
 
   getStyle(): ReturnType<typeof getStyle> {
     return getStyle(this.props.theme)
   }
 
-  loadFromFile(file: File, combineMode: boolean = false) {
-    return this.loadProfile(async () => {
-      const profiles = await importProfilesFromFile(file)
-      if (profiles) {
-        for (let profile of profiles.profiles) {
-          if (!profile.getName()) {
-            profile.setName(file.name)
-          }
-        }
-        return profiles
-      }
+  onWindowKeyDown = this.loader.onWindowKeyDown
 
-      if (this.props.profileGroup && this.props.activeProfileState) {
-        // If a profile is already loaded, it's possible the file being imported is
-        // a symbol map. If that's the case, we want to parse it, and apply the symbol
-        // mapping to the already loaded profile. This can be use to take an opaque
-        // profile and make it readable.
-        const reader = new FileReader()
-        const fileContentsPromise = new Promise<string>(resolve => {
-          reader.addEventListener('loadend', () => {
-            if (typeof reader.result !== 'string') {
-              throw new Error('Expected reader.result to be a string')
-            }
-            resolve(reader.result)
-          })
-        })
-        reader.readAsText(file)
-        const fileContents = await fileContentsPromise
+  onDocumentPaste = this.loader.onDocumentPaste
 
-        let symbolRemapper: SymbolRemapper | null = null
+  maybeLoadHashParamProfile = this.loader.maybeLoadHashParamProfile
 
-        const emscriptenSymbolRemapper = importEmscriptenSymbolRemapper(fileContents)
-        if (emscriptenSymbolRemapper) {
-          console.log('Importing as emscripten symbol map')
-          symbolRemapper = emscriptenSymbolRemapper
-        }
+  onFileSelect = this.loader.onFileSelect
 
-        const jsSourceMapRemapper = await importJavaScriptSourceMapSymbolRemapper(
-          fileContents,
-          file.name,
-        )
-        if (!symbolRemapper && jsSourceMapRemapper) {
-          console.log('Importing as JavaScript source map')
-          symbolRemapper = jsSourceMapRemapper
-        }
+  loadExample = this.loader.loadExample
 
-        if (symbolRemapper != null) {
-          return {
-            name: this.props.profileGroup.name || 'profile',
-            indexToView: this.props.profileGroup.indexToView,
-            profiles: this.props.profileGroup.profiles.map(profileState => {
-              // We do a shallow clone here to invalidate certain caches keyed
-              // on a reference to the profile group under the assumption that
-              // profiles are immutable. Symbol remapping is (at time of
-              // writing) the only exception to that immutability.
-              const p = profileState.profile.shallowClone()
-              p.remapSymbols(symbolRemapper!)
-              return p
-            }),
-          }
-        }
-      }
+  onDrop = this.loader.onDrop
 
-      return null
-    }, combineMode)
-  }
+  onDragOver = this.loader.onDragOver
 
-  loadExample = () => {
-    this.loadProfile(async () => {
-      const filename = 'perf-vertx-stacks-01-collapsed-all.txt'
-      const data = await fetch(exampleProfileURL).then(resp => resp.text())
-      return await importProfilesFromText(filename, data)
-    })
-  }
+  onDragLeave = this.loader.onDragLeave
 
-  private checkDragImportEnabled = () => {
-    return toolbarConfigAtom.get().dragImport ?? true;
-  }
+  saveFile = this.loader.saveFile
 
-  onDrop = (ev: DragEvent) => {
-    if (!this.checkDragImportEnabled()) {
-      return;
-    }
-    this.props.setDragActive(false)
-    ev.preventDefault()
-
-    this.loadDropFile(ev);
-  }
-
-  loadDropFile = async (ev: DragEvent) => {
-    if (!ev.dataTransfer) return
-    const items = ev.dataTransfer.items
-    const files = ev.dataTransfer.files
-    const firstItem = items[0]
-
-    if (items.length > 0 && 'webkitGetAsEntry' in firstItem) {
-      const webkitEntry: FileSystemEntry | null = firstItem.webkitGetAsEntry()
-
-      // Instrument.app file format is actually a directory.
-      console.log(firstItem, webkitEntry);
-      if (
-        webkitEntry &&
-        isFileSystemDirectoryEntry(webkitEntry) &&
-        webkitEntry.name.endsWith('.trace')
-      ) {
-        console.log('Importing as Instruments.app .trace file')
-        const webkitDirectoryEntry: FileSystemDirectoryEntry = webkitEntry
-        this.loadProfile(async () => {
-          return await importFromFileSystemDirectoryEntry(webkitDirectoryEntry)
-        })
-        return
-      }
-    } else if (!firstItem) {
-      console.warn("Drag&drop has not provided any items");
-    }
-
-    if (files.length > 0) {
-      const fileList = Array.from(files)
-
-      for (let i = 0; i < fileList.length; i++) {
-        const shouldCombine = i > 0
-        const file = fileList[i]
-
-        await this.loadFromFile(file, shouldCombine)
-      }
-
-    } else {
-        console.warn("Drag&drop has not provided any files")
-    }
-  }
-
-  onDragOver = (ev: DragEvent) => {
-    if (!this.checkDragImportEnabled()) {
-      return;
-    }
-    this.props.setDragActive(true)
-    ev.preventDefault()
-  }
-
-  onDragLeave = (ev: DragEvent) => {
-    if (!this.checkDragImportEnabled()) {
-      return;
-    }
-    this.props.setDragActive(false)
-    ev.preventDefault()
-  }
+  browseForFile = this.loader.browseForFile
 
   onWindowKeyPress = async (ev: KeyboardEvent) => {
     if (ev.key === '1') {
@@ -453,73 +164,14 @@ export class Application extends StatelessComponent<ApplicationProps> {
       const {flattenRecursion} = this.props
       this.props.setFlattenRecursion(!flattenRecursion)
     } else if (ev.key === 'n') {
-      const {activeProfileState} = this.props
-      if (activeProfileState) {
-        this.props.setProfileIndexToView(activeProfileState.index + 1)
+      if (this.props.activeProfileState) {
+        this.props.setProfileIndexToView(this.props.activeProfileState.index + 1)
       }
     } else if (ev.key === 'p') {
-      const {activeProfileState} = this.props
-      if (activeProfileState) {
-        this.props.setProfileIndexToView(activeProfileState.index - 1)
+      if (this.props.activeProfileState) {
+        this.props.setProfileIndexToView(this.props.activeProfileState.index - 1)
       }
     }
-  }
-
-  saveFile = () => {
-    if (this.props.profileGroup) {
-      const {name, indexToView, profiles} = this.props.profileGroup
-      const profileGroup: ProfileGroup = {
-        name,
-        indexToView,
-        profiles: profiles.map(p => p.profile),
-      }
-      saveToFile(profileGroup)
-    }
-  }
-
-  browseForFile = (onstart?: () => void, onabort?: () => void) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-    const callbacks = loadingCallbacksAtom.get();
-    if (callbacks.onabort || onabort) {
-      input.addEventListener('cancel', (_e) => {
-        if (onabort) { onabort() }
-        if (callbacks.onabort) { callbacks.onabort() }
-      })
-    }
-    input.addEventListener('change', (e) => {
-      this.onFileSelect(e)
-      if (onstart) {onstart()}
-      if (callbacks.onstart) {callbacks.onstart()}
-    })
-    input.click()
-  }
-
-  private onWindowKeyDown = async (ev: KeyboardEvent) => {
-    // This has to be handled on key down in order to prevent the default
-    // page save action.
-    if (ev.key === 's' && (ev.ctrlKey || ev.metaKey)) {
-      ev.preventDefault()
-      this.saveFile()
-    } else if (ev.key === 'o' && (ev.ctrlKey || ev.metaKey)) {
-      ev.preventDefault()
-      this.browseForFile()
-    }
-  }
-
-  onDocumentPaste = (ev: Event) => {
-    if (document.activeElement != null && document.activeElement.nodeName === 'INPUT') return
-
-    ev.preventDefault()
-    ev.stopPropagation()
-
-    const clipboardData = (ev as ClipboardEvent).clipboardData
-    if (!clipboardData) return
-    const pasted = clipboardData.getData('text')
-    this.loadProfile(async () => {
-      return await importProfilesFromText('From Clipboard', pasted)
-    })
   }
 
   componentDidMount() {
@@ -535,58 +187,8 @@ export class Application extends StatelessComponent<ApplicationProps> {
     document.removeEventListener('paste', this.onDocumentPaste)
   }
 
-  async maybeLoadHashParamProfile() {
-    const {profileURLs} = this.props.hashParams
-    if (profileURLs && profileURLs.length > 0) {
-      if (!canUseXHR) {
-        alert(
-          `Cannot load a profile URL when loading from "${window.location.protocol}" URL protocol`,
-        )
-        return
-      }
-      for (let i = 0; i < profileURLs.length; ++i) {
-        const allowMultiple = i > 0;
-
-        await this.loadProfile(async () => {
-          const response: Response = await fetch(profileURLs[i])
-          let filename = new URL(profileURLs[i], window.location.href).pathname
-          if (filename.includes('/')) {
-            filename = filename.slice(filename.lastIndexOf('/') + 1)
-          }
-          return await importProfilesFromArrayBuffer(filename, await response.arrayBuffer())
-        }, allowMultiple)
-      }
-    } else if (this.props.hashParams.localProfilePath) {
-      // There isn't good cross-browser support for XHR of local files, even from
-      // other local files. To work around this restriction, we load the local profile
-      // as a JavaScript file which will invoke a global function.
-      ;(window as any)['speedscope'] = {
-        loadFileFromBase64: (filename: string, base64source: string) => {
-          this.loadProfile(() => importProfilesFromBase64(filename, base64source))
-        },
-      }
-
-      const script = document.createElement('script')
-      script.src = `file:///${this.props.hashParams.localProfilePath}`
-      document.head.appendChild(script)
-    }
-  }
-
-  onFileSelect = async (ev: Event) => {
-    const files = (ev.target as HTMLInputElement).files
-    if (!files || files.length === 0) return
-
-    const fileList = Array.from(files)
-
-    for (let i = 0; i < fileList.length; i++) {
-      const shouldCombine = i > 0
-      const file = fileList[i]
-      await this.loadFromFile(file, shouldCombine)
-    }
-  }
-
   redrawCanvas = () => {
-    this.glCanvasRef.current?.onWindowResize();
+    this.glCanvasRef.current?.onWindowResize()
   }
 
   renderLanding() {
@@ -721,7 +323,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
   render() {
     const style = this.getStyle()
-    const transparent = useAtom(metadataOnlyProfileAtom);
+    const transparent = useAtom(metadataOnlyProfileAtom)
     return (
       <div
         onDrop={this.onDrop}

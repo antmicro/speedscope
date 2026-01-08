@@ -163,13 +163,11 @@ function importSpeedscopeProfile(
 }
 
 export function importSpeedscopeProfiles(serialized: FileFormat.File): ProfileGroup {
-  if (serialized.metadata) {
-    metadataAtom.set(serialized.metadata);
-  }
   return {
     name: serialized.name || serialized.profiles[0].name || 'profile',
     indexToView: serialized.activeProfileIndex || 0,
     profiles: serialized.profiles.map(p => importSpeedscopeProfile(p, serialized.shared.frames)),
+    metadata: serialized.metadata,
   }
 }
 

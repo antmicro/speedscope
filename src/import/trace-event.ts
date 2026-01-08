@@ -648,9 +648,6 @@ function eventListToProfileGroup(
   const partitionedTraceEvents = partitionByPidTid(importableEvents)
   const profileNamesByPidTid = getProfileNamesFromTraceEvents(events, partitionedTraceEvents)
 
-  // Extract metadata
-  importMetadata(events)
-
   const profilePairs: [string, Profile][] = []
 
   profileNamesByPidTid.forEach((name, profileKey) => {
@@ -676,6 +673,7 @@ function eventListToProfileGroup(
     name: '',
     indexToView: 0,
     profiles: profilePairs.map(p => p[1]),
+    metadata: importMetadata(events)
   }
 }
 
@@ -783,7 +781,7 @@ function importMetadata(events: TraceEvent[]) {
     if (event.ph !== 'M') continue
     metadata.push(event)
   }
-  metadataAtom.set(metadata)
+  return metadata;
 }
 
 export function isTraceEventFormatted(rawProfile: any): rawProfile is Trace {

@@ -16,9 +16,9 @@ import {
 } from '../app-state'
 import {useAtom} from '../lib/atom'
 import {ProfileSearchContextProvider} from './search-view'
-import {Application} from './application'
+import {Application, ApplicationProps} from './application'
 
-export const ApplicationContainer = memo(() => {
+export const ApplicationContainer = memo((props: Partial<ApplicationProps>) => {
   const canvas = useAtom(glCanvasAtom)
   const theme = useTheme()
   const canvasContext = useMemo(
@@ -49,6 +49,7 @@ export const ApplicationContainer = memo(() => {
         loading={useAtom(loadingAtom)}
         error={useAtom(errorAtom)}
         customWelcomeMessage={useAtom(customWelcomeMessagesAtom)}
+        {...props}
       />
     </ProfileSearchContextProvider>
   )
