@@ -536,22 +536,26 @@ export class Application extends StatelessComponent<ApplicationProps> {
   }
 
   async maybeLoadHashParamProfile() {
-    const {profileURL} = this.props.hashParams
-    if (profileURL) {
+    const {profileURLs} = this.props.hashParams
+    if (profileURLs && profileURLs.length > 0) {
       if (!canUseXHR) {
         alert(
           `Cannot load a profile URL when loading from "${window.location.protocol}" URL protocol`,
         )
         return
       }
-      this.loadProfile(async () => {
-        const response: Response = await fetch(profileURL)
-        let filename = new URL(profileURL, window.location.href).pathname
-        if (filename.includes('/')) {
-          filename = filename.slice(filename.lastIndexOf('/') + 1)
-        }
-        return await importProfilesFromArrayBuffer(filename, await response.arrayBuffer())
-      })
+      for (let i = 0; i < profileURLs.length; ++i) {
+        const allowMultiple = i > 0;
+
+        await this.loadProfile(async () => {
+          const response: Response = await fetch(profileURLs[i])
+          let filename = new URL(profileURLs[i], window.location.href).pathname
+          if (filename.includes('/')) {
+            filename = filename.slice(filename.lastIndexOf('/') + 1)
+          }
+          return await importProfilesFromArrayBuffer(filename, await response.arrayBuffer())
+        }, allowMultiple)
+      }
     } else if (this.props.hashParams.localProfilePath) {
       // There isn't good cross-browser support for XHR of local files, even from
       // other local files. To work around this restriction, we load the local profile

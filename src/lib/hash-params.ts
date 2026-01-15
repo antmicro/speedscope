@@ -1,7 +1,7 @@
 import {ViewMode} from '../lib/view-mode'
 
 export interface HashParams {
-  profileURL?: string
+  profileURLs?: string[]
   title?: string
   localProfilePath?: string
   viewMode?: ViewMode
@@ -26,12 +26,14 @@ export function getHashParams(hashContents = window.location.hash): HashParams {
       return {}
     }
     const components = hashContents.substr(1).split('&')
-    const result: HashParams = {}
+    const result: HashParams = {
+      profileURLs: []
+    }
     for (const component of components) {
       let [key, value] = component.split('=')
       value = decodeURIComponent(value)
       if (key === 'profileURL') {
-        result.profileURL = value
+        result.profileURLs?.push(value)
       } else if (key === 'title') {
         result.title = value
       } else if (key === 'localProfilePath') {
