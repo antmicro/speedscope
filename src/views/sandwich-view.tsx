@@ -1,4 +1,4 @@
-import {Frame} from '../lib/profile'
+import {CallTreeNode, Frame} from '../lib/profile'
 import {StyleSheet, css} from 'aphrodite'
 import {ProfileTableViewContainer} from './profile-table-view'
 import {h, JSX, createContext} from 'preact'
@@ -12,17 +12,28 @@ import {ActiveProfileState} from '../app-state/active-profile-state'
 import {sortBy} from '../lib/utils'
 import {ProfileSearchContext} from './search-view'
 import {Theme, useTheme, withTheme} from './themes/theme'
-import {SortField, SortDirection, profileGroupAtom, tableSortMethodAtom} from '../app-state'
+import {SortField, SortDirection, tableSortMethodAtom} from '../app-state'
+import {noop} from '../lib/utils'
 import {useAtom} from '../lib/atom'
 import {StatelessComponent} from '../lib/preact-helpers'
+import { FlamechartID } from '../app-state/profile-group'
+import { Rect, Vec2 } from '../lib/math'
+import { CanvasContext } from '../gl/canvas-context'
 
-interface SandwichViewProps {
+export interface SandwichViewSetters {
+  setLogicalSpaceViewportSize: (id: FlamechartID, logicalSpaceViewportSize: Vec2) => void
+  setConfigSpaceViewportRect: (id: FlamechartID, configSpaceViewportRect: Rect) => void
+  setFlamechartHoveredNode: (id: FlamechartID, hover: {node: CallTreeNode; event: MouseEvent} | null) => void
+  setSelectedFrame: (selectedFrame: Frame | null) => void
+}
+
+interface SandwichViewProps extends SandwichViewSetters {
   selectedFrame: Frame | null
   profileIndex: number
   theme: Theme
   activeProfileState: ActiveProfileState
-  setSelectedFrame: (selectedFrame: Frame | null) => void
   glCanvas: HTMLCanvasElement
+  canvasContext?: CanvasContext,
 }
 
 class SandwichView extends StatelessComponent<SandwichViewProps> {
@@ -57,8 +68,9 @@ class SandwichView extends StatelessComponent<SandwichViewProps> {
               <div className={css(style.flamechartLabel)}>Callers</div>
             </div>
             <InvertedCallerFlamegraphView
-              glCanvas={this.props.glCanvas}
-              activeProfileState={this.props.activeProfileState}
+              {...this.props}
+              setNodeHover={this.props.setFlamechartHoveredNode}
+              setSelectedNode={noop}
             />
           </div>
           <div className={css(style.divider)} />
@@ -67,8 +79,9 @@ class SandwichView extends StatelessComponent<SandwichViewProps> {
               <div className={css(style.flamechartLabel, style.flamechartLabelBottom)}>Callees</div>
             </div>
             <CalleeFlamegraphView
-              glCanvas={this.props.glCanvas}
-              activeProfileState={this.props.activeProfileState}
+              {...this.props}
+              setNodeHover={this.props.setFlamechartHoveredNode}
+              setSelectedNode={noop}
             />
           </div>
         </div>
@@ -78,7 +91,7 @@ class SandwichView extends StatelessComponent<SandwichViewProps> {
     return (
       <div className={css(commonStyle.hbox, commonStyle.fillY)}>
         <div className={css(style.tableView)}>
-          <ProfileTableViewContainer activeProfileState={this.props.activeProfileState} />
+          <ProfileTableViewContainer activeProfileState={this.props.activeProfileState} setSelectedFrame={this.setSelectedFrame} />
           <SandwichSearchView />
         </div>
         {flamegraphViews}
@@ -130,7 +143,7 @@ const getStyle = withTheme(theme =>
   }),
 )
 
-interface SandwichViewContainerProps {
+interface SandwichViewContainerProps extends SandwichViewSetters {
   activeProfileState: ActiveProfileState
   glCanvas: HTMLCanvasElement
 }
@@ -146,13 +159,13 @@ interface SandwichViewContextData {
 export const SandwichViewContext = createContext<SandwichViewContextData | null>(null)
 
 export const SandwichViewContainer = memo((ownProps: SandwichViewContainerProps) => {
-  const {activeProfileState, glCanvas} = ownProps
+  const {activeProfileState} = ownProps
   const {sandwichViewState, index} = activeProfileState
   const {callerCallee} = sandwichViewState
 
   const theme = useTheme()
   const setSelectedFrame = useCallback((selectedFrame: Frame | null) => {
-    profileGroupAtom.setSelectedFrame(selectedFrame)
+    ownProps.setSelectedFrame(selectedFrame)
   }, [])
 
   const profile = activeProfileState.profile
@@ -221,10 +234,8 @@ export const SandwichViewContainer = memo((ownProps: SandwichViewContainerProps)
   return (
     <SandwichViewContext.Provider value={contextData}>
       <SandwichView
+        {...ownProps}
         theme={theme}
-        activeProfileState={activeProfileState}
-        glCanvas={glCanvas}
-        setSelectedFrame={setSelectedFrame}
         selectedFrame={selectedFrame}
         profileIndex={index}
       />

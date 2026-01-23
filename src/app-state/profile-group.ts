@@ -213,10 +213,10 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
     }
   }
 
-  setFlamechartHoveredNode(
+  setFlamechartHoveredNode = (
     id: FlamechartID,
     hover: {node: CallTreeNode; event: MouseEvent} | null,
-  ) {
+  ) => {
     hoveredAtom.set(hover?.node ?? null)
     this.updateFlamechartState(id, f => ({
       ...f,
@@ -224,7 +224,7 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
     }))
   }
 
-  setSelectedNode(id: FlamechartID, selectedNode: CallTreeNode | null) {
+  setSelectedNode = (id: FlamechartID, selectedNode: CallTreeNode | null) => {
     selectedAtom.set(selectedNode)
     this.updateFlamechartState(id, f => ({
       ...f,
@@ -232,14 +232,14 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
     }))
   }
 
-  setConfigSpaceViewportRect(id: FlamechartID, configSpaceViewportRect: Rect) {
+  setConfigSpaceViewportRect = (id: FlamechartID, configSpaceViewportRect: Rect) => {
     this.updateFlamechartState(id, f => ({
       ...f,
       configSpaceViewportRect,
     }))
   }
 
-  setLogicalSpaceViewportSize(id: FlamechartID, logicalSpaceViewportSize: Vec2) {
+  setLogicalSpaceViewportSize = (id: FlamechartID, logicalSpaceViewportSize: Vec2) => {
     this.updateFlamechartState(id, f => ({
       ...f,
       logicalSpaceViewportSize,

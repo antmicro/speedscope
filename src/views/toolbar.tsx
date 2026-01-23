@@ -8,7 +8,7 @@ import {Profile} from '../lib/profile'
 import {objectsHaveShallowEquality} from '../lib/utils'
 import {useTheme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
-import {metadataOnlyProfileAtom, toolbarConfigAtom, viewModeAtom} from '../app-state'
+import {metadataOnlyProfileAtom, toolbarConfigAtom} from '../app-state'
 import {ProfileGroupState} from '../app-state/profile-group'
 import {useAtom} from '../lib/atom'
 import ChevronDownIcon from './icons/chevron-down'
@@ -24,9 +24,9 @@ function useSetViewMode(setViewMode: (viewMode: ViewMode) => void, viewMode: Vie
 
 function ToolbarRightContent(props: ToolbarProps) {
   const style = getStyle(useTheme())
-  const setChronoFlameChart = useSetViewMode(viewModeAtom.set, ViewMode.CHRONO_FLAME_CHART)
-  const setLeftHeavyFlameGraph = useSetViewMode(viewModeAtom.set, ViewMode.LEFT_HEAVY_FLAME_GRAPH)
-  const setSandwichView = useSetViewMode(viewModeAtom.set, ViewMode.SANDWICH_VIEW)
+  const setChronoFlameChart = useSetViewMode(props.setViewMode, ViewMode.CHRONO_FLAME_CHART)
+  const setLeftHeavyFlameGraph = useSetViewMode(props.setViewMode, ViewMode.LEFT_HEAVY_FLAME_GRAPH)
+  const setSandwichView = useSetViewMode(props.setViewMode, ViewMode.SANDWICH_VIEW)
 
   if (!props.activeProfileState) return null
 

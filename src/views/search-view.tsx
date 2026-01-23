@@ -5,7 +5,7 @@ import {memo} from 'preact/compat'
 import {Sizes, FontSize} from './style'
 import {ProfileSearchResults} from '../lib/profile-search'
 import {Profile} from '../lib/profile'
-import {useActiveProfileState} from '../app-state/active-profile-state'
+import {ActiveProfileState} from '../app-state/active-profile-state'
 import {useTheme, withTheme} from './themes/theme'
 import {searchIsActiveAtom, searchQueryAtom} from '../app-state'
 import {useAtom} from '../lib/atom'
@@ -16,8 +16,7 @@ function stopPropagation(ev: Event) {
 
 export const ProfileSearchContext = createContext<ProfileSearchResults | null>(null)
 
-export const ProfileSearchContextProvider = ({children}: {children: ComponentChildren}) => {
-  const activeProfileState = useActiveProfileState()
+export const ProfileSearchContextProvider = ({activeProfileState, children}: {activeProfileState: ActiveProfileState | null, children: ComponentChildren}) => {
   const profile: Profile | null = activeProfileState ? activeProfileState.profile : null
   const searchIsActive = useAtom(searchIsActiveAtom)
   const searchQuery = useAtom(searchQueryAtom)

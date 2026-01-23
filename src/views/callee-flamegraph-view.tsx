@@ -14,10 +14,10 @@ import {
 } from '../app-state/getters'
 import {FlamechartWrapper} from './flamechart-wrapper'
 import {h} from 'preact'
-import {memo} from 'preact/compat'
+import {memo, useMemo} from 'preact/compat'
 import {useTheme} from './themes/theme'
 import {FlamechartID} from '../app-state/profile-group'
-import {flattenRecursionAtom, glCanvasAtom} from '../app-state'
+import {flattenRecursionAtom} from '../app-state'
 import {useAtom} from '../lib/atom'
 
 const getCalleeProfile = memoizeByShallowEquality<
@@ -50,14 +50,12 @@ const getCalleeFlamegraph = memoizeByShallowEquality<
 const getCalleeFlamegraphRenderer = createMemoizedFlamechartRenderer()
 
 export const CalleeFlamegraphView = memo((ownProps: FlamechartViewContainerProps) => {
-  const {activeProfileState} = ownProps
+  const {glCanvas, activeProfileState, canvasContext: propsCanvasContext} = ownProps
   const {profile, sandwichViewState} = activeProfileState
   const flattenRecursion = useAtom(flattenRecursionAtom)
-  const glCanvas = useAtom(glCanvasAtom)
   const theme = useTheme()
 
   if (!profile) throw new Error('profile missing')
-  if (!glCanvas) throw new Error('glCanvas missing')
   const {callerCallee} = sandwichViewState
   if (!callerCallee) throw new Error('callerCallee missing')
   const {selectedFrame} = callerCallee
@@ -65,7 +63,11 @@ export const CalleeFlamegraphView = memo((ownProps: FlamechartViewContainerProps
   const frameToColorBucket = getFrameToColorBucket(profile)
   const getColorBucketForFrame = createGetColorBucketForFrame(frameToColorBucket)
   const getCSSColorForFrame = createGetCSSColorForFrame({theme, frameToColorBucket})
-  const canvasContext = getCanvasContext({theme, canvas: glCanvas})
+  const canvasContext = propsCanvasContext || useMemo(
+    () => (getCanvasContext({theme, canvas: glCanvas})),
+      [theme, glCanvas],
+  )
+
 
   const flamechart = getCalleeFlamegraph({
     calleeProfile: getCalleeProfile({profile, frame: selectedFrame, flattenRecursion}),
@@ -81,7 +83,7 @@ export const CalleeFlamegraphView = memo((ownProps: FlamechartViewContainerProps
       flamechartRenderer={flamechartRenderer}
       canvasContext={canvasContext}
       getCSSColorForFrame={getCSSColorForFrame}
-      {...useFlamechartSetters(FlamechartID.SANDWICH_CALLEES)}
+      {...useFlamechartSetters(ownProps, FlamechartID.SANDWICH_CALLEES)}
       {...callerCallee.calleeFlamegraph}
       // This overrides the setSelectedNode specified in useFlamechartSettesr
       setSelectedNode={noop}

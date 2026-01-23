@@ -15,7 +15,6 @@ import {
   SortDirection,
   SortMethod,
   SortField,
-  profileGroupAtom,
   tableSortMethodAtom,
   searchIsActiveAtom,
   searchQueryAtom,
@@ -424,6 +423,7 @@ const getStyle = withTheme(theme =>
 
 interface ProfileTableViewContainerProps {
   activeProfileState: ActiveProfileState
+  setSelectedFrame: (selectedFrame: Frame | null) => void
 }
 
 export const ProfileTableViewContainer = memo((ownProps: ProfileTableViewContainerProps) => {
@@ -438,7 +438,7 @@ export const ProfileTableViewContainer = memo((ownProps: ProfileTableViewContain
   const getCSSColorForFrame = createGetCSSColorForFrame({theme, frameToColorBucket})
 
   const setSelectedFrame = useCallback((selectedFrame: Frame | null) => {
-    profileGroupAtom.setSelectedFrame(selectedFrame)
+    ownProps.setSelectedFrame(selectedFrame)
   }, [])
   const searchIsActive = useAtom(searchIsActiveAtom)
   const searchQuery = useAtom(searchQueryAtom)

@@ -13,9 +13,11 @@ import {Theme, withTheme} from './themes/theme'
 import {ViewMode} from '../lib/view-mode'
 import {canUseXHR, CustomWelcomeMessage, metadataOnlyProfileAtom} from '../app-state'
 import {StatelessComponent} from '../lib/preact-helpers'
-import {SandwichViewContainer} from './sandwich-view'
+import {SandwichViewContainer, SandwichViewSetters} from './sandwich-view'
 import {useAtom} from '../lib/atom'
 import {ProfileLoader, ProfileLoaderState} from '../lib/profile-loader'
+import {FlamechartID} from '../app-state/profile-group'
+import {CallTreeNode} from '../lib/profile'
 
 const importModule = import('../import')
 
@@ -108,10 +110,11 @@ export class GLCanvas extends StatelessComponent<GLCanvasProps> {
   }
 }
 
-export interface ApplicationProps extends ProfileLoaderState {
+export type ApplicationProps = {
   setGLCanvas: (canvas: HTMLCanvasElement | null) => void
   setProfileIndexToView: (profileIndex: number) => void
   setFlattenRecursion: (flattenRecursion: boolean) => void
+  setSelectedNode: (id: FlamechartID, selectedNode: CallTreeNode | null) => void
   activeProfileState: ActiveProfileState | null
   canvasContext: CanvasContext | null
   theme: Theme
@@ -122,7 +125,7 @@ export interface ApplicationProps extends ProfileLoaderState {
   glCanvas: HTMLCanvasElement | null
   error: boolean
   customWelcomeMessage: CustomWelcomeMessage
-}
+} & ProfileLoaderState & SandwichViewSetters
 
 export class Application extends StatelessComponent<ApplicationProps> {
   glCanvasRef = createRef<GLCanvas>()
@@ -308,15 +311,15 @@ export class Application extends StatelessComponent<ApplicationProps> {
 
     switch (viewMode) {
       case ViewMode.CHRONO_FLAME_CHART: {
-        return <ChronoFlamechartView activeProfileState={activeProfileState} glCanvas={glCanvas} />
+        return <ChronoFlamechartView {...this.props} activeProfileState={activeProfileState} glCanvas={glCanvas} setNodeHover={this.props.setFlamechartHoveredNode} />
       }
       case ViewMode.LEFT_HEAVY_FLAME_GRAPH: {
         return (
-          <LeftHeavyFlamechartView activeProfileState={activeProfileState} glCanvas={glCanvas} />
+          <LeftHeavyFlamechartView {...this.props} activeProfileState={activeProfileState} glCanvas={glCanvas} setNodeHover={this.props.setFlamechartHoveredNode} />
         )
       }
       case ViewMode.SANDWICH_VIEW: {
-        return <SandwichViewContainer activeProfileState={activeProfileState} glCanvas={glCanvas} />
+        return <SandwichViewContainer {...this.props} activeProfileState={activeProfileState} glCanvas={glCanvas} />
       }
     }
   }

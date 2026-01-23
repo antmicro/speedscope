@@ -10,9 +10,9 @@ import {
   glCanvasAtom,
   hashParamsAtom,
   loadingAtom,
-  profileGroupAtom,
   viewModeAtom,
   customWelcomeMessagesAtom,
+  profileGroupAtom,
 } from '../app-state'
 import {useAtom} from '../lib/atom'
 import {ProfileSearchContextProvider} from './search-view'
@@ -26,20 +26,27 @@ export const ApplicationContainer = memo((props: Partial<ApplicationProps>) => {
     [theme, canvas],
   )
 
+  const activeProfileState = useActiveProfileState()
+  const profileGroup = useAtom(profileGroupAtom)
   return (
-    <ProfileSearchContextProvider>
+    <ProfileSearchContextProvider activeProfileState={props.activeProfileState ?? activeProfileState ?? null}>
       <Application
-        activeProfileState={useActiveProfileState()}
+        activeProfileState={activeProfileState}
         canvasContext={canvasContext}
         setGLCanvas={glCanvasAtom.set}
         setLoading={loadingAtom.set}
         setError={errorAtom.set}
-        setProfileGroup={profileGroupAtom.setProfileGroup}
         setDragActive={dragActiveAtom.set}
         setViewMode={viewModeAtom.set}
         setFlattenRecursion={flattenRecursionAtom.set}
+        setProfileGroup={profileGroupAtom.setProfileGroup}
         setProfileIndexToView={profileGroupAtom.setProfileIndexToView}
-        profileGroup={useAtom(profileGroupAtom)}
+        setSelectedNode={profileGroupAtom.setSelectedNode}
+        setSelectedFrame={profileGroupAtom.setSelectedFrame}
+        setConfigSpaceViewportRect={profileGroupAtom.setConfigSpaceViewportRect}
+        setFlamechartHoveredNode={profileGroupAtom.setFlamechartHoveredNode}
+        setLogicalSpaceViewportSize={profileGroupAtom.setLogicalSpaceViewportSize}
+        profileGroup={profileGroup}
         theme={theme}
         flattenRecursion={useAtom(flattenRecursionAtom)}
         viewMode={useAtom(viewModeAtom)}
