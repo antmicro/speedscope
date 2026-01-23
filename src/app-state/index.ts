@@ -106,9 +106,6 @@ export const metadataOnlyProfileAtom = new Atom<boolean>(false, 'metadataOnlyPro
 // The toolbar configuration allowing to change title or disable buttons
 export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
 
-// The reference to the object with application
-export const appRefAtom = new Atom<MutableRef<Application | undefined> | null>(null, 'appRef');
-
 // The coordinates of hovered point
 export const timestampHoveredAtom = new Atom<HoveredPoint | null>(null, 'timestampHovered');
 

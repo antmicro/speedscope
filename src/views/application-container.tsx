@@ -1,6 +1,6 @@
 import {h} from 'preact'
 import {getCanvasContext} from '../app-state/getters'
-import {memo, useEffect, useMemo, useRef} from 'preact/compat'
+import {memo, useMemo} from 'preact/compat'
 import {useActiveProfileState} from '../app-state/active-profile-state'
 import {useTheme} from './themes/theme'
 import {
@@ -13,7 +13,6 @@ import {
   profileGroupAtom,
   viewModeAtom,
   customWelcomeMessagesAtom,
-  appRefAtom,
 } from '../app-state'
 import {useAtom} from '../lib/atom'
 import {ProfileSearchContextProvider} from './search-view'
@@ -26,17 +25,10 @@ export const ApplicationContainer = memo(() => {
     () => (canvas ? getCanvasContext({theme, canvas}) : null),
     [theme, canvas],
   )
-  const ref = useRef<Application>();
-
-  useEffect(() => {
-    if (ref) {appRefAtom.set(ref);}
-    return () => appRefAtom.set(null);
-  })
 
   return (
     <ProfileSearchContextProvider>
       <Application
-        ref={ref}
         activeProfileState={useActiveProfileState()}
         canvasContext={canvasContext}
         setGLCanvas={glCanvasAtom.set}
