@@ -1,4 +1,4 @@
-import {hoveredAtom, metadataAtom, selectedAtom} from '.'
+import {hoveredAtom, metadataAtom} from '.'
 import {Atom} from '../lib/atom'
 import {clamp, Rect, Vec2} from '../lib/math'
 import {CallTreeNode, Frame, Profile, ProfileGroup} from '../lib/profile'
@@ -147,7 +147,6 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
       return
     }
 
-    selectedAtom.set(frame)
     this.updateActiveSandwichViewState(sandwichViewState => {
       if (frame == null) {
         return {callerCallee: null}
@@ -225,7 +224,6 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
   }
 
   setSelectedNode = (id: FlamechartID, selectedNode: CallTreeNode | null) => {
-    selectedAtom.set(selectedNode)
     this.updateFlamechartState(id, f => ({
       ...f,
       selectedNode,

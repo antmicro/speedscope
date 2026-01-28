@@ -25,31 +25,6 @@ export const viewModeAtom = new Atom<ViewMode>(ViewMode.CHRONO_FLAME_CHART, 'vie
 // The top-level profile group from which most other data will be derived
 export const profileGroupAtom = new ProfileGroupAtom(null, 'profileGroup')
 
-// The selected Frame or CallTreeNode
-export const selectedAtom = new Atom<Frame | CallTreeNode | null>(null, 'selected');
-
-viewModeAtom.subscribe(() => {
-  // If we switch views, the hover information is no longer relevant
-  profileGroupAtom.clearHoverNode()
-  // Update selected node in new view
-  const activeProfile = profileGroupAtom.getActiveProfile()
-  console.log("NEW viewMode", viewModeAtom.get())
-  switch (viewModeAtom.get()) {
-    case ViewMode.CHRONO_FLAME_CHART:
-      console.log("CHRONO", activeProfile?.chronoViewState.selectedNode)
-      selectedAtom.set(activeProfile?.chronoViewState.selectedNode ?? null)
-      break
-    case ViewMode.LEFT_HEAVY_FLAME_GRAPH:
-      console.log("LEFT", activeProfile?.leftHeavyViewState.selectedNode)
-      selectedAtom.set(activeProfile?.leftHeavyViewState.selectedNode ?? null)
-      break
-    case ViewMode.SANDWICH_VIEW:
-      console.log("SANDWICH", activeProfile?.sandwichViewState.callerCallee?.selectedFrame)
-      selectedAtom.set(activeProfile?.sandwichViewState.callerCallee?.selectedFrame ?? null)
-      break
-  }
-})
-
 // Parameters defined by the URL encoded k=v pairs after the # in the URL
 const hashParams = getHashParams()
 export const hashParamsAtom = new Atom<HashParams>(hashParams, 'hashParams')
