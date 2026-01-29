@@ -3,10 +3,7 @@ import {ViewMode} from '../lib/view-mode'
 import {getHashParams, HashParams} from '../lib/hash-params'
 import {ProfileGroupAtom, Metadata} from './profile-group'
 import { VNode } from 'preact'
-import { MutableRef } from 'preact/hooks'
-import { Application } from '../views/application'
 import { HoveredPoint } from '../lib/utils'
-import { CallTreeNode, Frame } from '../lib/profile'
 
 // True if recursion should be flattened when viewing flamegraphs
 export const flattenRecursionAtom = new Atom<boolean>(false, 'flattenRecursion')
@@ -83,9 +80,6 @@ export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
 
 // The coordinates of hovered point
 export const timestampHoveredAtom = new Atom<HoveredPoint | null>(null, 'timestampHovered');
-
-// The hovered Frame or CallTreeNode
-export const hoveredAtom = new Atom<Frame | CallTreeNode | null>(null, 'hovered');
 
 export enum SortField {
   SYMBOL_NAME,

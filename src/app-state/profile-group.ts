@@ -1,4 +1,4 @@
-import {hoveredAtom, metadataAtom} from '.'
+import {metadataAtom} from '.'
 import {Atom} from '../lib/atom'
 import {clamp, Rect, Vec2} from '../lib/math'
 import {CallTreeNode, Frame, Profile, ProfileGroup} from '../lib/profile'
@@ -216,7 +216,6 @@ export class ProfileGroupAtom extends Atom<ProfileGroupState> {
     id: FlamechartID,
     hover: {node: CallTreeNode; event: MouseEvent} | null,
   ) => {
-    hoveredAtom.set(hover?.node ?? null)
     this.updateFlamechartState(id, f => ({
       ...f,
       hover,
