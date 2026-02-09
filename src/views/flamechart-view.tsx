@@ -67,7 +67,9 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
   }
 
   onNodeClick = (node: CallTreeNode | null) => {
-    this.props.setSelectedNode(node)
+    if (this.props.selectedNode !== node) {
+      this.props.setSelectedNode(node)
+    }
   }
 
   formatValue(weight: number) {
