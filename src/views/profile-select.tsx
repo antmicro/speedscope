@@ -362,7 +362,7 @@ export function ProfileSelect({
 
 const paddingHeight = 10
 
-const getStyle = withTheme(theme => (groupCount: number = 1) =>
+export const getStyle = withTheme(theme => (groupCount: number = 1) =>
   StyleSheet.create({
     filterInputContainer: {
       display: 'flex',
