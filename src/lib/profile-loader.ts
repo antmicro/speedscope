@@ -62,6 +62,9 @@ export interface ProfileLoaderState {
 }
 
 export class ProfileLoader {
+  /** Information whether the hash params were already processed and loaded */
+  static hashParamLoaded: boolean = false
+
   constructor(
     public state: ProfileLoaderState,
   ) {}
@@ -389,6 +392,9 @@ export class ProfileLoader {
   }
 
   maybeLoadHashParamProfile = async () => {
+    if (ProfileLoader.hashParamLoaded) {
+      return
+    }
     const {profileURLs} = this.state.hashParams
     if (profileURLs && profileURLs.length > 0) {
       if (!canUseXHR) {
@@ -425,6 +431,7 @@ export class ProfileLoader {
       script.src = `file:///${this.state.hashParams.localProfilePath}`
       document.head.appendChild(script)
     }
+    ProfileLoader.hashParamLoaded = true
   }
 
   onFileSelect = (ev: Event) => {
