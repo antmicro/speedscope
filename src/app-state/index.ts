@@ -81,6 +81,9 @@ export const toolbarConfigAtom = new Atom<ToolbarConfig>({}, 'toolbarConfig')
 // The coordinates of hovered point
 export const timestampHoveredAtom = new Atom<HoveredPoint | null>(null, 'timestampHovered');
 
+// Id of focused flamegraph
+export const focusedPanelAtom = new Atom<string | null>(null, 'focusedPanel')
+
 export enum SortField {
   SYMBOL_NAME,
   SELF,
