@@ -85,8 +85,13 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
   private renderRects() {
     if (!this.container) return
 
-    // Hasn't resized yet -- no point in rendering yet
-    if (this.physicalViewSize().x < 2) return
+    const physicalViewSize = this.physicalViewSize()
+    const availableSize = physicalViewSize.minus(this.minimapOrigin())
+
+    // Do not render if hasn't resized or if the there is no available space yet
+    if (availableSize.y <= 0 || physicalViewSize.x < 2) {
+      return
+    }
 
     this.props.canvasContext.renderBehind(this.container, () => {
       this.props.flamechartRenderer.render({
