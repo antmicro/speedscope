@@ -320,6 +320,7 @@ export function ProfileSelect({
             onKeyUp={stopPropagation}
             onKeyPress={stopPropagation}
             onFocus={stopPropagation}
+            onFocusOut={closeProfileSelect}
           />
         </div>
         <div className={css(style.filterBorder)} />
