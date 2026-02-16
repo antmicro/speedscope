@@ -52,7 +52,7 @@ const getCalleeFlamegraphRenderer = createMemoizedFlamechartRenderer()
 export const CalleeFlamegraphView = memo((ownProps: FlamechartViewContainerProps) => {
   const {glCanvas, activeProfileState, canvasContext: propsCanvasContext} = ownProps
   const {profile, sandwichViewState} = activeProfileState
-  const flattenRecursion = useAtom(flattenRecursionAtom)
+  const flattenRecursion = ownProps.flattenRecursion ?? useAtom(flattenRecursionAtom)
   const theme = useTheme()
 
   if (!profile) throw new Error('profile missing')

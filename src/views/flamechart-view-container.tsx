@@ -112,7 +112,8 @@ const getChronoViewFlamechartRenderer = createMemoizedFlamechartRenderer()
 export interface FlamechartViewContainerProps {
   activeProfileState: ActiveProfileState
   glCanvas: HTMLCanvasElement
-  canvasContext?: CanvasContext,
+  canvasContext?: CanvasContext
+  flattenRecursion?: boolean
   setLogicalSpaceViewportSize: (id: FlamechartID, logicalSpaceViewportSize: Vec2) => void
   setConfigSpaceViewportRect: (id: FlamechartID, configSpaceViewportRect: Rect) => void
   setNodeHover: (id: FlamechartID, hover: {node: CallTreeNode; event: MouseEvent} | null) => void

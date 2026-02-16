@@ -57,7 +57,7 @@ const getInvertedCallerFlamegraphRenderer = createMemoizedFlamechartRenderer({in
 export const InvertedCallerFlamegraphView = memo((ownProps: FlamechartViewContainerProps) => {
   const {glCanvas, activeProfileState, canvasContext: propsCanvasContext} = ownProps
   let {profile, sandwichViewState} = activeProfileState
-  const flattenRecursion = useAtom(flattenRecursionAtom)
+  const flattenRecursion = ownProps.flattenRecursion ?? useAtom(flattenRecursionAtom)
   const theme = useTheme()
 
   if (!profile) throw new Error('profile missing')

@@ -34,6 +34,7 @@ interface SandwichViewProps extends SandwichViewSetters {
   activeProfileState: ActiveProfileState
   glCanvas: HTMLCanvasElement
   canvasContext?: CanvasContext
+  flattenRecursion?: boolean
   isFocused?: (ev: KeyboardEvent) => boolean
 }
 
