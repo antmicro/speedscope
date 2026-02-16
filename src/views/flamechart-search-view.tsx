@@ -39,7 +39,7 @@ export const FlamechartSearchContextProvider = ({
   setConfigSpaceViewportRect,
   children,
 }: FlamechartSearchProps) => {
-  const profileSearchResults: ProfileSearchResults | null = useContext(ProfileSearchContext)
+  const profileSearchResults: ProfileSearchResults | null = useContext(ProfileSearchContext)?.getResults() ?? null
   const flamechartSearchResults: FlamechartSearchResults | null = useMemo(() => {
     if (profileSearchResults == null) {
       return null

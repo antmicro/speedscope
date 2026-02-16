@@ -1,6 +1,6 @@
 import {StyleSheet, css} from 'aphrodite'
 import {h, createContext, ComponentChildren, Fragment} from 'preact'
-import {useCallback, useRef, useEffect, useMemo} from 'preact/hooks'
+import {useCallback, useRef, useEffect, useMemo, useContext} from 'preact/hooks'
 import {memo} from 'preact/compat'
 import {Sizes, FontSize} from './style'
 import {ProfileSearchResults} from '../lib/profile-search'
@@ -14,7 +14,15 @@ function stopPropagation(ev: Event) {
   ev.stopPropagation()
 }
 
-export const ProfileSearchContext = createContext<ProfileSearchResults | null>(null)
+export interface ProfileSearch {
+    getResults(): ProfileSearchResults | null
+    getQuery(): string
+    isActive(): void
+    setActive(value: boolean): void
+    setQuery(query: string): void
+}
+
+export const ProfileSearchContext = createContext<ProfileSearch | null>(null)
 
 export const ProfileSearchContextProvider = ({activeProfileState, children}: {activeProfileState: ActiveProfileState | null, children: ComponentChildren}) => {
   const profile: Profile | null = activeProfileState ? activeProfileState.profile : null
@@ -28,8 +36,14 @@ export const ProfileSearchContextProvider = ({activeProfileState, children}: {ac
     return new ProfileSearchResults(profile, searchQuery)
   }, [searchIsActive, searchQuery, profile])
 
+  const getResults = () => searchResults
+  const getQuery = () => searchQuery
+  const isActive = () => searchIsActive
+  const setActive = searchIsActiveAtom.set
+  const setQuery = searchQueryAtom.set
+
   return (
-    <ProfileSearchContext.Provider value={searchResults}>{children}</ProfileSearchContext.Provider>
+    <ProfileSearchContext.Provider value={{getResults, getQuery, isActive, setActive, setQuery}}>{children}</ProfileSearchContext.Provider>
   )
 }
 
@@ -45,22 +59,19 @@ export const SearchView = memo(
   ({numResults, resultIndex, selectNext, selectPrev, isFocused}: SearchViewProps) => {
     const theme = useTheme()
     const style = getStyle(theme)
-    const searchIsActive = useAtom(searchIsActiveAtom)
-    const searchQuery = useAtom(searchQueryAtom)
-    const setSearchQuery = searchQueryAtom.set
-    const setSearchIsActive = searchIsActiveAtom.set
+    const searchContext = useContext(ProfileSearchContext)
 
     const onInput = useCallback(
       (ev: Event) => {
         const value = (ev.target as HTMLInputElement).value
-        setSearchQuery(value)
+        searchContext?.setQuery(value)
       },
-      [setSearchQuery],
+      [searchContext],
     )
 
     const inputRef = useRef<HTMLInputElement | null>(null)
 
-    const close = useCallback(() => setSearchIsActive(false), [setSearchIsActive])
+    const close = useCallback(() => searchContext?.setActive(false), [searchContext])
 
     const selectPrevOrNextResult = useCallback(
       (ev: KeyboardEvent) => {
@@ -79,7 +90,7 @@ export const SearchView = memo(
 
         // Hitting Esc should close the search box
         if (ev.key === 'Escape') {
-          setSearchIsActive(false)
+          searchContext?.setActive(false)
         }
 
         if (ev.key === 'Enter') {
@@ -98,7 +109,7 @@ export const SearchView = memo(
           ev.preventDefault()
         }
       },
-      [setSearchIsActive, selectPrevOrNextResult],
+      [searchContext, selectPrevOrNextResult],
     )
 
     useEffect(() => {
@@ -115,7 +126,7 @@ export const SearchView = memo(
           } else {
             // Otherwise, focus the search, then focus the input on the next
             // frame, when the search box should have mounted.
-            setSearchIsActive(true)
+            searchContext?.setActive(true)
             requestAnimationFrame(() => {
               if (inputRef.current) {
                 inputRef.current.select()
@@ -129,9 +140,9 @@ export const SearchView = memo(
       return () => {
         window.removeEventListener('keydown', onWindowKeyDown)
       }
-    }, [setSearchIsActive])
+    }, [searchContext])
 
-    if (!searchIsActive) return null
+    if (!searchContext?.isActive()) return null
 
     return (
       <div className={css(style.searchView)}>
@@ -139,7 +150,7 @@ export const SearchView = memo(
         <span className={css(style.inputContainer)}>
           <input
             className={css(style.input)}
-            value={searchQuery}
+            value={searchContext.getQuery()}
             onInput={onInput}
             onKeyDown={onKeyDown}
             onKeyUp={stopPropagation}

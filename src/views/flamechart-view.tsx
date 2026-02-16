@@ -142,7 +142,7 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
                 setConfigSpaceViewportRect={this.setConfigSpaceViewportRect}
                 logicalSpaceViewportSize={this.props.logicalSpaceViewportSize}
                 setLogicalSpaceViewportSize={this.setLogicalSpaceViewportSize}
-                searchResults={searchResults}
+                searchResults={searchResults?.getResults() ?? null}
                 enableTimestampPointer={this.props.enableTimestampPointer}
               />
               <FlamechartSearchView isFocused={this.props.isFocused} />

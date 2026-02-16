@@ -173,7 +173,7 @@ export const SandwichViewContainer = memo((ownProps: SandwichViewContainerProps)
 
   const profile = activeProfileState.profile
   const tableSortMethod = useAtom(tableSortMethodAtom)
-  const profileSearchResults = useContext(ProfileSearchContext)
+  const profileSearchResults = useContext(ProfileSearchContext)?.getResults() ?? null
 
   const selectedFrame = callerCallee ? callerCallee.selectedFrame : null
 

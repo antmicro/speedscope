@@ -21,6 +21,7 @@ import {
 } from '../app-state'
 import {useAtom} from '../lib/atom'
 import {ActiveProfileState} from '../app-state/active-profile-state'
+import {ProfileSearchContext} from './search-view'
 
 interface HBarProps {
   perc: number
@@ -440,8 +441,7 @@ export const ProfileTableViewContainer = memo((ownProps: ProfileTableViewContain
   const setSelectedFrame = useCallback((selectedFrame: Frame | null) => {
     ownProps.setSelectedFrame(selectedFrame)
   }, [])
-  const searchIsActive = useAtom(searchIsActiveAtom)
-  const searchQuery = useAtom(searchQueryAtom)
+  const searchContext = useContext(ProfileSearchContext)
 
   return (
     <ProfileTableView
@@ -451,8 +451,8 @@ export const ProfileTableViewContainer = memo((ownProps: ProfileTableViewContain
       sortMethod={tableSortMethod}
       setSelectedFrame={setSelectedFrame}
       setSortMethod={tableSortMethodAtom.set}
-      searchIsActive={searchIsActive}
-      searchQuery={searchQuery}
+      searchIsActive={searchContext?.isActive() ?? false}
+      searchQuery={searchContext?.getQuery() ?? ''}
     />
   )
 })
