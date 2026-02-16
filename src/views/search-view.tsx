@@ -38,10 +38,11 @@ interface SearchViewProps {
   numResults: number | null
   selectNext: () => void
   selectPrev: () => void
+  isFocused?: (ev: KeyboardEvent) => boolean
 }
 
 export const SearchView = memo(
-  ({numResults, resultIndex, selectNext, selectPrev}: SearchViewProps) => {
+  ({numResults, resultIndex, selectNext, selectPrev, isFocused}: SearchViewProps) => {
     const theme = useTheme()
     const style = getStyle(theme)
     const searchIsActive = useAtom(searchIsActiveAtom)
@@ -102,6 +103,7 @@ export const SearchView = memo(
 
     useEffect(() => {
       const onWindowKeyDown = (ev: KeyboardEvent) => {
+        if (isFocused && !isFocused(ev)) return
         // Cmd+F or Ctrl+F open the search box
         if (ev.key == 'f' && (ev.metaKey || ev.ctrlKey)) {
           // Prevent the browser's search menu from appearing

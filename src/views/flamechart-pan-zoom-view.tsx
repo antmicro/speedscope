@@ -65,6 +65,7 @@ export interface FlamechartPanZoomViewProps {
   searchResults: ProfileSearchResults | null
 
   enableTimestampPointer: boolean
+  isFocused?: () => boolean
 }
 
 export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps, {}> {
@@ -766,6 +767,7 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
   }
 
   onWindowKeyPress = (ev: KeyboardEvent) => {
+    if (this.props.isFocused && !this.props.isFocused()) return
     if (!this.container) return
     const {width, height} = this.container.getBoundingClientRect()
 

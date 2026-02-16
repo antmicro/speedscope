@@ -115,6 +115,7 @@ export type ApplicationProps = {
   setProfileIndexToView: (profileIndex: number) => void
   setFlattenRecursion: (flattenRecursion: boolean) => void
   setSelectedNode: (id: FlamechartID, selectedNode: CallTreeNode | null) => void
+  isFocused?: (ev: KeyboardEvent) => boolean
   activeProfileState: ActiveProfileState | null
   canvasContext: CanvasContext | null
   theme: Theme
@@ -136,7 +137,10 @@ export class Application extends StatelessComponent<ApplicationProps> {
     return getStyle(this.props.theme)
   }
 
-  onWindowKeyDown = this.loader.onWindowKeyDown
+  onWindowKeyDown = (ev: KeyboardEvent) => {
+      if (this.props.isFocused && !this.props.isFocused(ev)) return
+      this.loader.onWindowKeyDown(ev)
+  }
 
   onDocumentPaste = this.loader.onDocumentPaste
 
@@ -157,6 +161,7 @@ export class Application extends StatelessComponent<ApplicationProps> {
   browseForFile = this.loader.browseForFile
 
   onWindowKeyPress = async (ev: KeyboardEvent) => {
+    if (this.props.isFocused && !this.props.isFocused(ev)) return
     if (ev.key === '1') {
       this.props.setViewMode(ViewMode.CHRONO_FLAME_CHART)
     } else if (ev.key === '2') {

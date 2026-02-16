@@ -145,7 +145,7 @@ export class FlamechartView extends StatelessComponent<FlamechartViewProps> {
                 searchResults={searchResults}
                 enableTimestampPointer={this.props.enableTimestampPointer}
               />
-              <FlamechartSearchView />
+              <FlamechartSearchView isFocused={this.props.isFocused} />
             </Fragment>
           )}
         </ProfileSearchContext.Consumer>

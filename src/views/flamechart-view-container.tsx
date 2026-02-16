@@ -66,6 +66,7 @@ export type FlamechartViewProps = {
   renderInverted: boolean
   getCSSColorForFrame: (frame: Frame) => string
   enableTimestampPointer: boolean
+  isFocused?: (ev: KeyboardEvent) => boolean
 } & FlamechartSetters &
   FlamechartViewState
 
@@ -116,6 +117,7 @@ export interface FlamechartViewContainerProps {
   setConfigSpaceViewportRect: (id: FlamechartID, configSpaceViewportRect: Rect) => void
   setNodeHover: (id: FlamechartID, hover: {node: CallTreeNode; event: MouseEvent} | null) => void
   setSelectedNode: (id: FlamechartID, selectedNode: CallTreeNode | null) => void
+  isFocused?: (ev: KeyboardEvent) => boolean
 }
 
 export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) => {
@@ -157,6 +159,7 @@ export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) =
         canvasContext={canvasContext}
         getCSSColorForFrame={getCSSColorForFrame}
         enableTimestampPointer={!metadataOnlySt}
+        isFocused={props.isFocused}
         {...chronoViewState}
         {...setters}
       />

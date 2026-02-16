@@ -104,19 +104,8 @@ function ToolbarLeftContent(props: ToolbarProps): JSX.Element {
 
   useEffect(() => {
     const onWindowKeyPress = (ev: KeyboardEvent) => {
-      if (ev.key === 't') {
-        ev.preventDefault()
-        setProfileSelectShown(true)
-      }
-    }
-    window.addEventListener('keypress', onWindowKeyPress)
-    return () => {
-      window.removeEventListener('keypress', onWindowKeyPress)
-    }
-  }, [setProfileSelectShown])
+      if (props.isFocused && !props.isFocused(ev)) return
 
-  useEffect(() => {
-    const onWindowKeyPress = (ev: KeyboardEvent) => {
       if (ev.key === 't') {
         ev.preventDefault()
         setProfileSelectShown(true)

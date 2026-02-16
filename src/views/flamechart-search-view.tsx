@@ -63,7 +63,7 @@ export const FlamechartSearchContextProvider = ({
   )
 }
 
-export const FlamechartSearchView = memo(() => {
+export const FlamechartSearchView = memo(({isFocused}: {isFocused?: (ev: KeyboardEvent) => boolean}) => {
   const flamechartData = useContext(FlamechartSearchContext)
 
   // TODO(jlfwong): This pattern is pretty gross, but I really don't want values
@@ -146,6 +146,7 @@ export const FlamechartSearchView = memo(() => {
       numResults={numResults}
       selectPrev={selectPrev}
       selectNext={selectNext}
+      isFocused={isFocused}
     />
   )
 })

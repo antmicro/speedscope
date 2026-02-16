@@ -33,7 +33,8 @@ interface SandwichViewProps extends SandwichViewSetters {
   theme: Theme
   activeProfileState: ActiveProfileState
   glCanvas: HTMLCanvasElement
-  canvasContext?: CanvasContext,
+  canvasContext?: CanvasContext
+  isFocused?: (ev: KeyboardEvent) => boolean
 }
 
 class SandwichView extends StatelessComponent<SandwichViewProps> {
@@ -42,6 +43,7 @@ class SandwichView extends StatelessComponent<SandwichViewProps> {
   }
 
   onWindowKeyPress = (ev: KeyboardEvent) => {
+    if (this.props.isFocused && !this.props.isFocused(ev)) return
     if (ev.key === 'Escape') {
       this.setSelectedFrame(null)
     }
@@ -92,7 +94,7 @@ class SandwichView extends StatelessComponent<SandwichViewProps> {
       <div className={css(commonStyle.hbox, commonStyle.fillY)}>
         <div className={css(style.tableView)}>
           <ProfileTableViewContainer activeProfileState={this.props.activeProfileState} setSelectedFrame={this.setSelectedFrame} />
-          <SandwichSearchView />
+          <SandwichSearchView isFocused={this.props.isFocused} />
         </div>
         {flamegraphViews}
       </div>

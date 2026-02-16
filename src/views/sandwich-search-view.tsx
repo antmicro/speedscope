@@ -4,7 +4,7 @@ import {SearchView} from './search-view'
 import {h} from 'preact'
 import {SandwichViewContext} from './sandwich-view'
 
-export const SandwichSearchView = memo(() => {
+export const SandwichSearchView = memo(({isFocused}: {isFocused?: (ev: KeyboardEvent) => boolean}) => {
   const sandwichViewContext = useContext(SandwichViewContext)
 
   const rowList = sandwichViewContext != null ? sandwichViewContext.rowList : null
@@ -39,6 +39,7 @@ export const SandwichSearchView = memo(() => {
       numResults={numResults}
       selectPrev={selectPrev}
       selectNext={selectNext}
+      isFocused={isFocused}
     />
   )
 })
