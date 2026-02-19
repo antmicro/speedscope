@@ -202,11 +202,17 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
 
   componentDidMount() {
     window.addEventListener('resize', this.onWindowResize)
+    document.body.addEventListener('scroll', this.onScroll)
     this.props.canvasContext.addBeforeFrameHandler(this.onBeforeFrame)
   }
 
+  onScroll = () => {
+    this.renderCanvas()
+  };
+
   componentWillUnmount() {
     window.removeEventListener('resize', this.onWindowResize)
+    document.body.removeEventListener('scroll', this.onScroll)
     this.props.canvasContext.removeBeforeFrameHandler(this.onBeforeFrame)
   }
 
