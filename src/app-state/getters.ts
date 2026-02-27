@@ -23,7 +23,7 @@ export const createGetCSSColorForFrame = memoizeByShallowEquality(
   }) => {
     const getColorBucketForFrame = createGetColorBucketForFrame(frameToColorBucket)
     return (frame: Frame): string => {
-      const t = getColorBucketForFrame(frame) / 255
+      const t = getColorBucketForFrame(frame) / 255;
       return theme.colorForBucket(t).toCSS()
     }
   },
@@ -61,9 +61,54 @@ export const getFrameToColorBucket = memoizeByReference(
     frames.sort(compare)
     const frameToColorBucket = new Map<string | number, number>()
     for (let i = 0; i < frames.length; i++) {
-      frameToColorBucket.set(frames[i].key, Math.floor((255 * i) / frames.length))
+      const hashKey = `${frames[i].name}_${profile.name}_${profile.groupName}`;
+      const t = computeT(hashKey);
+      frameToColorBucket.set(frames[i].key, t * 255);
     }
 
     return frameToColorBucket
   },
 )
+
+const colorMask = 0xFF000000;
+const colorStep = 0x13000000;
+
+let hashingCache = new Map<string, number>();
+
+const computeHash = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length / 2; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+        hash = (hash << 5) - hash + str.charCodeAt(str.length-1-i);
+        hash |= 0;
+    }
+    hash = (hash & colorMask) >>> 0;
+    return hash;
+}
+
+const retrieveHash = (str: string) => {
+    const cached = hashingCache.get(str);
+    if (cached !== undefined) {
+        return cached;
+    }
+
+    let hash = computeHash(str);
+
+    let present = true;
+    const originalHash = hash;
+    while(present){
+        present = Array.from(hashingCache.values()).includes(hash);
+        if (present) {
+            hash = ((hash + colorStep) & colorMask) >>> 0;
+            if (hash === originalHash) break;
+        }
+    }
+    hashingCache.set(str, hash);
+
+    return hash;
+}
+
+const computeT = (str: string) => {
+    return retrieveHash(str) / 0xFFFFFFFF;
+}
