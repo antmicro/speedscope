@@ -57,7 +57,7 @@ export function ProfileSelectRow({
   const groupCount = getGroupNames().length
   const style = getStyle(useTheme())(groupCount)
 
-  const onMouseUp = useCallback(() => {
+  const onMouseDown = useCallback(() => {
     closeProfileSelect()
     setProfileIndexToView(indexInProfileGroup)
   }, [closeProfileSelect, setProfileIndexToView, indexInProfileGroup])
@@ -87,7 +87,7 @@ export function ProfileSelectRow({
   return (
     <div
       ref={nodeRef}
-      onMouseUp={onMouseUp}
+      onMouseDown={onMouseDown}
       onMouseEnter={onMouseEnter}
       title={name}
       className={css(
