@@ -14,6 +14,7 @@ import type {HashParams} from './hash-params'
 import type {Metadata, ProfileGroupState} from '../app-state/profile-group'
 import type {ViewMode} from './view-mode'
 import {saveToFile} from './file-format'
+import {rawTefEventsAtom} from '../app-state'
 
 const importModule = import('../import')
 import exampleProfileURL from '../../sample/profiles/stackcollapse/perf-vertx-stacks-01-collapsed-all.txt'
@@ -233,6 +234,16 @@ export class ProfileLoader {
     })
   }
 
+  private _isTefFormat(parsedJson: any): boolean {
+    return (
+      Array.isArray(parsedJson) &&
+      parsedJson.length > 0 &&
+      typeof parsedJson[0] === 'object' &&
+      parsedJson[0] !== null &&
+      ('ph' in parsedJson[0] || 'name' in parsedJson[0])
+    )
+  }
+
   private async mergeProfileGroups(maybeProfileGroups: (ProfileGroup | null)[]) {
     if (maybeProfileGroups.some((profile) => !profile)) return null
     const profileGroups = maybeProfileGroups as ProfileGroup[]
@@ -252,6 +263,21 @@ export class ProfileLoader {
       return
     }
 
+    let mergedRawEvents: Record<string, any>[] = [];
+    for (const file of files) {
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+
+        if (this._isTefFormat(parsed)) {
+          mergedRawEvents = mergedRawEvents.concat(parsed);
+        }
+      } catch (e) {
+        console.warn(`Skipping TEF merge for ${file.name}: not valid JSON.`);
+      }
+    }
+    rawTefEventsAtom.set(mergedRawEvents);
+
     return this._setProfileGroup(async () => {
       const profileGroups = await Promise.all(files.map((file) => this._loadFromFile(file)))
       return this.mergeProfileGroups(profileGroups)
@@ -263,6 +289,20 @@ export class ProfileLoader {
   }
 
   async loadFromFile(file: File) {
+    let rawEvents: Record<string, any>[] = [];
+
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+
+      if (this._isTefFormat(parsed)) {
+        rawEvents = parsed;
+      }
+    } catch (e) {
+      console.warn(`Problem loading ${file.name}: not valid JSON.`);
+    }
+
+    rawTefEventsAtom.set(rawEvents);
     return this._setProfileGroup(() => this._loadFromFile(file))
   }
 
@@ -334,7 +374,7 @@ export class ProfileLoader {
     ev.preventDefault()
   }
 
-  saveFile = () => {
+  saveSpeedscopeFile = () => {
     if (this.state.profileGroup) {
       const {name, indexToView, profiles} = this.state.profileGroup
       const profileGroup: ProfileGroup = {
@@ -344,6 +384,23 @@ export class ProfileLoader {
       }
       saveToFile(profileGroup)
     }
+  }
+
+  saveTEFFile = () => {
+    const rawEvents = rawTefEventsAtom.get();
+
+    const jsonString = JSON.stringify(rawEvents, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "exported.tef";
+    document.body.appendChild(a);
+    a.click();
+
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   browseForFile = (onstart?: () => void, onabort?: () => void) => {
@@ -370,7 +427,7 @@ export class ProfileLoader {
     // page save action.
     if (ev.key === 's' && (ev.ctrlKey || ev.metaKey)) {
       ev.preventDefault()
-      this.saveFile()
+      this.saveSpeedscopeFile()
     } else if (ev.key === 'o' && (ev.ctrlKey || ev.metaKey)) {
       ev.preventDefault()
       this.browseForFile()
@@ -386,6 +443,18 @@ export class ProfileLoader {
     const clipboardData = (ev as ClipboardEvent).clipboardData
     if (!clipboardData) return
     const pasted = clipboardData.getData('text')
+
+    let rawEvents: Record<string, any>[] = [];
+    try {
+      const parsed = JSON.parse(pasted);
+      if (this._isTefFormat(parsed)) {
+        rawEvents = parsed;
+      }
+    } catch (e) {
+      console.warn(`Problem loading ${file.name}: not valid JSON.`);
+    }
+    rawTefEventsAtom.set(rawEvents);
+
     this.loadProfile(async () => {
       return await importProfilesFromText('From Clipboard', pasted)
     })
@@ -404,9 +473,20 @@ export class ProfileLoader {
         return
       }
       await this._setProfileGroup(async () => {
+        let mergedRawEvents: Record<string, any>[] = [];
         const profileGroups = await Promise.all(profileURLs.map(async (profileURL) => {
           return this._loadProfile(async () => {
               const response: Response = await fetch(profileURL)
+
+              try {
+                const text = await response.clone().text();
+                const parsed = JSON.parse(text);
+                if (this._isTefFormat(parsed)) {
+                  mergedRawEvents = mergedRawEvents.concat(parsed);
+                }
+              } catch (e) {
+                console.warn(`Problem checking TEF for URL ${profileURL}`);
+              }
               let filename = new URL(profileURL, window.location.href).pathname
               if (filename.includes('/')) {
                 filename = filename.slice(filename.lastIndexOf('/') + 1)
@@ -415,6 +495,7 @@ export class ProfileLoader {
           })
         }))
 
+        rawTefEventsAtom.set(mergedRawEvents);
         return this.mergeProfileGroups(profileGroups)
       })
     } else if (this.state.hashParams.localProfilePath) {
