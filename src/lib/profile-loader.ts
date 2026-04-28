@@ -13,6 +13,7 @@ import {canUseXHR, loadingCallbacksAtom, metadataOnlyProfileAtom, toolbarConfigA
 import type {HashParams} from './hash-params'
 import type {Metadata, ProfileGroupState} from '../app-state/profile-group'
 import type {ViewMode} from './view-mode'
+import type {Trace} from '../import/trace-event.ts'
 import {saveToFile} from './file-format'
 import {rawTefEventsAtom} from '../app-state'
 
@@ -38,6 +39,13 @@ async function importProfilesFromArrayBuffer(
   contents: ArrayBuffer,
 ): Promise<ProfileGroup | null> {
   return (await importModule).importProfilesFromArrayBuffer(fileName, contents)
+}
+
+export async function importProfilesFromRaw(
+  fileName: string,
+  rawData: Trace,
+): Promise<ProfileGroup | null> {
+  return (await importModule).importProfileGroupFromRaw(fileName, rawData)
 }
 
 async function importProfilesFromFile(file: File): Promise<ProfileGroup | null> {

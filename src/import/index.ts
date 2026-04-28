@@ -20,7 +20,7 @@ import {ProfileDataSource, TextProfileDataSource, MaybeCompressedDataReader} fro
 import {importAsPprofProfile} from './pprof'
 import {decodeBase64} from '../lib/utils'
 import {importFromChromeHeapProfile} from './v8heapalloc'
-import {isTraceEventFormatted, importTraceEvents} from './trace-event'
+import {isTraceEventFormatted, importTraceEvents, type Trace} from './trace-event'
 import {importFromCallgrind} from './callgrind'
 import {importFromPapyrus} from './papyrus'
 import {importFromPMCStatCallGraph} from './pmcstat-callgraph'
@@ -39,6 +39,26 @@ export async function importProfileGroupFromBase64(
   return await importProfileGroup(
     MaybeCompressedDataReader.fromArrayBuffer(fileName, decodeBase64(b64contents).buffer),
   )
+}
+
+export async function importProfileGroupFromRaw(
+  fileName: string,
+  rawData: Trace,
+): Promise<ProfileGroup | null> {
+  const profileGroup = importTraceEvents(rawData)
+
+  if (!profileGroup) return null
+
+  if (!profileGroup.name) {
+    profileGroup.name = fileName
+  }
+
+  for (let profile of profileGroup.profiles) {
+    if (profile && !profile.getName()) {
+      profile.setName(fileName)
+    }
+  }
+  return profileGroup
 }
 
 export async function importProfilesFromFile(file: File): Promise<ProfileGroup | null> {
