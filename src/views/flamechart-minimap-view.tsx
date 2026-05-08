@@ -11,6 +11,7 @@ import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
 import {timestampHoveredAtom} from '../app-state'
 import {getPosition} from '../lib/utils'
+import { liveViewportProxy } from './live-viewport-proxy'
 
 interface FlamechartMinimapViewProps {
   theme: Theme
@@ -81,6 +82,27 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     const bounds = this.container.getBoundingClientRect()
     return AffineTransform.withTranslation(new Vec2(-bounds.left, -bounds.top))
   }
+  private getCurrentViewport(): Rect {
+      if (liveViewportProxy.isLiveMode) {
+        if (liveViewportProxy.configSpaceViewportRect.isEmpty()) {
+          liveViewportProxy.configSpaceViewportRect = this.props.configSpaceViewportRect
+        }
+        return liveViewportProxy.configSpaceViewportRect
+      }
+      return this.props.configSpaceViewportRect
+    }
+
+  private setViewport(newViewport: Rect, isUserInteraction: boolean) {
+    const clamped = this.props.flamechart.getClampedConfigSpaceViewportRect({
+      configSpaceViewportRect: newViewport
+    })
+
+    if (liveViewportProxy.isLiveMode) {
+      liveViewportProxy.configSpaceViewportRect = clamped
+    } else {
+      this.props.setConfigSpaceViewportRect(clamped)
+    }
+  }
 
   private renderRects() {
     if (!this.container) return
@@ -104,7 +126,7 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
       })
 
       this.props.canvasContext.viewportRectangleRenderer.render({
-        configSpaceViewportRect: this.props.configSpaceViewportRect,
+        configSpaceViewportRect: this.getCurrentViewport(),
         configSpaceToPhysicalViewSpace: this.configSpaceToPhysicalViewSpace(),
       })
     })
@@ -200,20 +222,36 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     }
   }
 
+  private rafId: number | null = null
+
+  private continuousRenderLoop = () => {
+    if (liveViewportProxy.isLiveMode && this.container) {
+      this.resizeOverlayCanvasIfNeeded()
+      this.renderRects()
+      this.renderOverlays()
+    }
+    this.rafId = requestAnimationFrame(this.continuousRenderLoop)
+  }
+
   componentDidMount() {
     window.addEventListener('resize', this.onWindowResize)
     document.body.addEventListener('scroll', this.onScroll)
     this.props.canvasContext.addBeforeFrameHandler(this.onBeforeFrame)
+
+    this.rafId = requestAnimationFrame(this.continuousRenderLoop)
   }
 
   onScroll = () => {
     this.renderCanvas()
-  };
+  }
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.onWindowResize)
     document.body.removeEventListener('scroll', this.onScroll)
     this.props.canvasContext.removeBeforeFrameHandler(this.onBeforeFrame)
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId)
+    }
   }
 
   private resizeOverlayCanvasIfNeeded() {
@@ -286,20 +324,23 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     const configDelta = this.configSpaceToPhysicalViewSpace().inverseTransformVector(physicalDelta)
 
     if (!configDelta) return
-    this.props.transformViewport(AffineTransform.withTranslation(configDelta))
+    const currentViewport = this.getCurrentViewport()
+    const panTransform = AffineTransform.withTranslation(configDelta)
+    this.setViewport(panTransform.transformRect(currentViewport), true)
   }
 
   private zoom(multiplier: number) {
     this.interactionLock = 'zoom'
-    const configSpaceViewport = this.props.configSpaceViewportRect
-    const configSpaceCenter = configSpaceViewport.origin.plus(configSpaceViewport.size.times(1 / 2))
+
+    const currentViewport = this.getCurrentViewport()
+    const configSpaceCenter = currentViewport.origin.plus(currentViewport.size.times(1 / 2))
     if (!configSpaceCenter) return
 
     const zoomTransform = AffineTransform.withTranslation(configSpaceCenter.times(-1))
       .scaledBy(new Vec2(multiplier, 1))
       .translatedBy(configSpaceCenter)
 
-    this.props.transformViewport(zoomTransform)
+    this.setViewport(zoomTransform.transformRect(currentViewport), true)
   }
 
   private onWheel = (ev: WheelEvent) => {
@@ -343,14 +384,15 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
   private draggingMode: DraggingMode | null = null
   private onMouseDown = (ev: MouseEvent) => {
     const configSpaceMouse = this.configSpaceMouse(ev)
+    const currentViewport = this.getCurrentViewport()
 
     if (configSpaceMouse) {
-      if (this.props.configSpaceViewportRect.contains(configSpaceMouse)) {
+      if (currentViewport.contains(configSpaceMouse)) {
         // If dragging starting inside the viewport rectangle,
         // we'll move the existing viewport
         this.draggingMode = DraggingMode.TRANSLATE_VIEWPORT
         this.dragConfigSpaceViewportOffset = configSpaceMouse.minus(
-          this.props.configSpaceViewportRect.origin,
+          currentViewport.origin,
         )
       } else {
         // If dragging starts outside the the viewport rectangle,
@@ -377,6 +419,9 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
       configSpaceMouse,
     )
 
+    let newViewport: Rect | null = null
+    const currentViewport = this.getCurrentViewport()
+
     if (this.draggingMode === DraggingMode.DRAW_NEW_VIEWPORT) {
       const configStart = this.dragStartConfigSpaceMouse
       let configEnd = configSpaceMouse
@@ -386,28 +431,30 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
       const right = Math.max(configStart.x, configEnd.x)
 
       const width = right - left
-      const height = this.props.configSpaceViewportRect.height()
+      const height = currentViewport.height()
 
-      this.props.setConfigSpaceViewportRect(
-        new Rect(new Vec2(left, configEnd.y - height / 2), new Vec2(width, height)),
-      )
+      newViewport = new Rect(new Vec2(left, configSpaceMouse.y - height / 2), new Vec2(width, height))
     } else if (this.draggingMode === DraggingMode.TRANSLATE_VIEWPORT) {
       if (!this.dragConfigSpaceViewportOffset) return
 
       const newOrigin = configSpaceMouse.minus(this.dragConfigSpaceViewportOffset)
-      this.props.setConfigSpaceViewportRect(
-        this.props.configSpaceViewportRect.withOrigin(newOrigin),
-      )
+      newViewport = currentViewport.withOrigin(newOrigin)
     }
+    if (newViewport) {
+      this.setViewport(newViewport, true)
+    }
+
   }
 
   private updateCursor = (configSpaceMouse: Vec2) => {
+    const currentViewport = this.getCurrentViewport()
+
     if (this.draggingMode === DraggingMode.TRANSLATE_VIEWPORT) {
       document.body.style.cursor = 'grabbing'
       document.body.style.cursor = '-webkit-grabbing'
     } else if (this.draggingMode === DraggingMode.DRAW_NEW_VIEWPORT) {
       document.body.style.cursor = 'col-resize'
-    } else if (this.props.configSpaceViewportRect.contains(configSpaceMouse)) {
+    } else if (currentViewport.contains(configSpaceMouse)) {
       document.body.style.cursor = 'grab'
       document.body.style.cursor = '-webkit-grab'
     } else {

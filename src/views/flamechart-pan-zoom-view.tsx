@@ -20,6 +20,7 @@ import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
 import {timestampHoveredAtom} from '../app-state'
 import {getPosition, HoveredPoint} from '../lib/utils'
+import { liveViewportProxy } from './live-viewport-proxy'
 
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
@@ -83,10 +84,6 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     return getFlamechartStyle(this.props.theme)
   }
 
-  private setConfigSpaceViewportRect(r: Rect) {
-    this.props.setConfigSpaceViewportRect(r)
-  }
-
   private overlayCanvasRef = (element: Element | null) => {
     if (element) {
       this.overlayCanvas = element as HTMLCanvasElement
@@ -134,10 +131,35 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     return new Rect(new Vec2(0, 0), this.physicalViewSize())
   }
 
+  private getCurrentViewport(): Rect {
+    if (liveViewportProxy.isLiveMode) {
+      if (liveViewportProxy.configSpaceViewportRect.isEmpty()) {
+        liveViewportProxy.configSpaceViewportRect = this.props.configSpaceViewportRect
+      }
+      return liveViewportProxy.configSpaceViewportRect
+    }
+    return this.props.configSpaceViewportRect
+  }
+
+  private setViewport(newViewport: Rect, isUserInteraction: boolean) {
+    const clamped = this.props.flamechart.getClampedConfigSpaceViewportRect({
+      configSpaceViewportRect: newViewport,
+      renderInverted: this.props.renderInverted,
+    })
+
+    if (liveViewportProxy.isLiveMode) {
+      liveViewportProxy.configSpaceViewportRect = clamped
+      if (isUserInteraction) {
+        liveViewportProxy.autoPanToRight = false
+      }
+    } else {
+      this.props.setConfigSpaceViewportRect(clamped)
+    }
+  }
   private LOGICAL_VIEW_SPACE_FRAME_HEIGHT = Sizes.FRAME_HEIGHT
 
   private configSpaceToPhysicalViewSpace() {
-    return AffineTransform.betweenRects(this.props.configSpaceViewportRect, this.physicalBounds())
+    return AffineTransform.betweenRects(this.getCurrentViewport(), this.physicalBounds())
   }
 
   private logicalToPhysicalViewSpace() {
@@ -173,7 +195,9 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
   private renderOverlays() {
     const ctx = this.overlayCtx
     if (!ctx) return
-    if (this.props.configSpaceViewportRect.isEmpty()) return
+
+    const currentViewport = this.getCurrentViewport()
+    if (currentViewport.isEmpty()) return
 
     const configToPhysical = this.configSpaceToPhysicalViewSpace()
 
@@ -208,16 +232,16 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
       const configSpaceBounds = new Rect(new Vec2(frame.start, y), new Vec2(width, 1))
 
       if (width < minConfigSpaceWidthToRender) return
-      if (configSpaceBounds.left() > this.props.configSpaceViewportRect.right()) return
-      if (configSpaceBounds.right() < this.props.configSpaceViewportRect.left()) return
+      if (configSpaceBounds.left() > currentViewport.right()) return
+      if (configSpaceBounds.right() < currentViewport.left()) return
 
       if (this.props.renderInverted) {
-        if (configSpaceBounds.bottom() < this.props.configSpaceViewportRect.top()) return
+        if (configSpaceBounds.bottom() < currentViewport.top()) return
       } else {
-        if (configSpaceBounds.top() > this.props.configSpaceViewportRect.bottom()) return
+        if (configSpaceBounds.top() > currentViewport.bottom()) return
       }
 
-      if (configSpaceBounds.hasIntersectionWith(this.props.configSpaceViewportRect)) {
+      if (configSpaceBounds.hasIntersectionWith(currentViewport)) {
         let physicalLabelBounds = configToPhysical.transformRect(configSpaceBounds)
 
         if (physicalLabelBounds.left() < 0) {
@@ -305,11 +329,11 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
       const configSpaceBounds = new Rect(new Vec2(frame.start, y), new Vec2(width, 1))
 
       if (width < minConfigSpaceWidthToRenderOutline) return
-      if (configSpaceBounds.left() > this.props.configSpaceViewportRect.right()) return
-      if (configSpaceBounds.right() < this.props.configSpaceViewportRect.left()) return
-      if (configSpaceBounds.top() > this.props.configSpaceViewportRect.bottom()) return
+      if (configSpaceBounds.left() >  currentViewport.right()) return
+      if (configSpaceBounds.right() < currentViewport.left()) return
+      if (configSpaceBounds.top() > currentViewport.bottom()) return
 
-      if (configSpaceBounds.hasIntersectionWith(this.props.configSpaceViewportRect)) {
+      if (configSpaceBounds.hasIntersectionWith(currentViewport)) {
         if (this.props.searchResults?.getMatchForFrame(frame.node.frame)) {
           const physicalRectBounds = configToPhysical.transformRect(configSpaceBounds)
           matchedFrameBatch.rect({
@@ -392,8 +416,9 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     const physicalViewSpaceFontSize = FontSize.LABEL * window.devicePixelRatio
     const labelPaddingPx = (physicalViewSpaceFrameHeight - physicalViewSpaceFontSize) / 2
 
-    const left = this.props.configSpaceViewportRect.left()
-    const right = this.props.configSpaceViewportRect.right()
+    const currentViewport = this.getCurrentViewport()
+    const left = currentViewport.left()
+    const right = currentViewport.right()
     // We want about 10 gridlines to be visible, and want the unit to be
     // 1eN, 2eN, or 5eN for some N
     // Ideally, we want an interval every 100 logical screen pixels
@@ -461,37 +486,43 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     // Still initializing: don't resize yet
     if (width < 2 || height < 2) return
 
-    if (this.props.configSpaceViewportRect.isEmpty()) {
+    if (this.getCurrentViewport().isEmpty()) {
       const configSpaceViewportHeight = height / this.LOGICAL_VIEW_SPACE_FRAME_HEIGHT
       if (this.props.renderInverted) {
-        this.setConfigSpaceViewportRect(
+        this.setViewport(
           new Rect(
             new Vec2(0, this.configSpaceSize().y - configSpaceViewportHeight + 1),
             new Vec2(this.configSpaceSize().x, configSpaceViewportHeight),
           ),
+          false,
         )
       } else {
-        this.setConfigSpaceViewportRect(
+         this.setViewport(
           new Rect(new Vec2(0, -1), new Vec2(this.configSpaceSize().x, configSpaceViewportHeight)),
+          false,
         )
       }
     } else if (
       !logicalSpaceViewportSize.equals(Vec2.zero) &&
       (logicalSpaceViewportSize.x !== width || logicalSpaceViewportSize.y !== height)
     ) {
+      const currentViewport = this.getCurrentViewport()
       // Resize the viewport rectangle to match the window size aspect
       // ratio.
-      this.setConfigSpaceViewportRect(
-        this.props.configSpaceViewportRect.withSize(
-          this.props.configSpaceViewportRect.size.timesPointwise(
+      this.setViewport(
+        currentViewport.withSize(
+          currentViewport.size.timesPointwise(
             new Vec2(width / logicalSpaceViewportSize.x, height / logicalSpaceViewportSize.y),
           ),
-        ),
+        ), false,
       )
     }
 
     const newSize = new Vec2(width, height)
     if (!newSize.equals(logicalSpaceViewportSize)) {
+      if (liveViewportProxy.isLiveMode) {
+        liveViewportProxy.logicalSpaceViewportSize = newSize
+      }
       this.props.setLogicalSpaceViewportSize(newSize)
     }
   }
@@ -505,12 +536,13 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     if (!this.container) return
     this.updateConfigSpaceViewport()
 
-    if (this.props.configSpaceViewportRect.isEmpty()) return
+    const currentViewport = this.getCurrentViewport()
+    if (currentViewport.isEmpty()) return
 
     this.props.canvasContext.renderBehind(this.container, () => {
       this.props.flamechartRenderer.render({
         physicalSpaceDstRect: this.physicalBounds(),
-        configSpaceSrcRect: this.props.configSpaceViewportRect,
+        configSpaceSrcRect: currentViewport,
         renderOutlines: true,
       })
     })
@@ -565,7 +597,11 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     }
 
     if (!configDelta) return
-    this.props.transformViewport(AffineTransform.withTranslation(configDelta))
+
+    const currentViewport = this.getCurrentViewport()
+    const panTransform = AffineTransform.withTranslation(configDelta)
+
+    this.setViewport(panTransform.transformRect(currentViewport), true)
   }
 
   private zoom(logicalViewSpaceCenter: Vec2, multiplier: number) {
@@ -581,7 +617,8 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
       .scaledBy(new Vec2(multiplier, 1))
       .translatedBy(configSpaceCenter)
 
-    this.props.transformViewport(zoomTransform)
+    const currentViewport = this.getCurrentViewport()
+    this.setViewport(zoomTransform.transformRect(currentViewport), true)
   }
 
   private lastDragPos: Vec2 | null = null
@@ -610,9 +647,9 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
       const hoveredBounds = this.hoveredLabel.configSpaceBounds
       const viewportRect = new Rect(
         hoveredBounds.origin.minus(new Vec2(0, 1)),
-        hoveredBounds.size.withY(this.props.configSpaceViewportRect.height()),
+        hoveredBounds.size.withY(this.getCurrentViewport().height()),
       )
-      this.setConfigSpaceViewportRect(viewportRect)
+      this.setViewport(viewportRect, true)
     }
   }
 
@@ -825,15 +862,44 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
       }
     }
   }
+
+  private rafId: number | null = null
+
+  private continousRenderLoop = () => {
+    if (liveViewportProxy.isLiveMode && this.container) {
+      if (liveViewportProxy.autoPanToRight) {
+        const totalWeight = this.props.flamechart.getTotalWeight()
+        const currentViewport = liveViewportProxy.configSpaceViewportRect
+
+        if (!currentViewport.isEmpty()) {
+          const newLeftEdge = totalWeight - currentViewport.width()
+          this.setViewport(
+            currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
+            false,
+          )
+        }
+      }
+      this.renderRects()
+      this.renderOverlays()
+    }
+
+    this.rafId = requestAnimationFrame(this.continousRenderLoop)
+  }
+
   componentDidMount() {
     this.props.canvasContext.addBeforeFrameHandler(this.onBeforeFrame)
     window.addEventListener('resize', this.onWindowResize)
     window.addEventListener('keydown', this.onWindowKeyPress)
+
+    this.rafId = requestAnimationFrame(this.continousRenderLoop)
   }
   componentWillUnmount() {
     this.props.canvasContext.removeBeforeFrameHandler(this.onBeforeFrame)
     window.removeEventListener('resize', this.onWindowResize)
     window.removeEventListener('keydown', this.onWindowKeyPress)
+    if (this.rafId) {
+        cancelAnimationFrame(this.rafId)
+    }
   }
 
   render() {
