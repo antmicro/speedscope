@@ -4,4 +4,5 @@ export const liveViewportProxy = {
   isLiveMode: false,
   configSpaceViewportRect: Rect.empty,
   logicalSpaceViewportSize: Vec2.zero,
+  autoPanToRight: true,
 }

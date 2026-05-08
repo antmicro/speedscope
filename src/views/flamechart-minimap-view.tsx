@@ -99,6 +99,9 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
 
     if (liveViewportProxy.isLiveMode) {
       liveViewportProxy.configSpaceViewportRect = clamped
+      if (isUserInteraction) {
+        liveViewportProxy.autoPanToRight = false
+      }
     } else {
       this.props.setConfigSpaceViewportRect(clamped)
     }

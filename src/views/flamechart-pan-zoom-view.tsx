@@ -135,6 +135,7 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     if (liveViewportProxy.isLiveMode) {
       if (liveViewportProxy.configSpaceViewportRect.isEmpty()) {
         liveViewportProxy.configSpaceViewportRect = this.props.configSpaceViewportRect
+        liveViewportProxy.autoPanToRight = true
       }
       return liveViewportProxy.configSpaceViewportRect
     }
