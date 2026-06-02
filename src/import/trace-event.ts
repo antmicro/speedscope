@@ -27,7 +27,7 @@ import {Metadata} from '../app-state/profile-group';
 //
 // Spec: https://docs.google.com/document/d/1CvAClvFfyA5R-PhYUmn5OOQtYMH4h6I0nSsKchNAySU/preview
 
-interface TraceEvent {
+export interface TraceEvent {
   // The process ID for the process that output this event.
   pid: number
 
@@ -90,11 +90,11 @@ type HermesTraceEvent = TraceEvent & {
   args: HermesTraceEventArgs
 }
 
-interface BTraceEvent extends TraceEvent {
+export interface BTraceEvent extends TraceEvent {
   ph: 'B'
 }
 
-interface ETraceEvent extends TraceEvent {
+export interface ETraceEvent extends TraceEvent {
   ph: 'E'
 }
 
@@ -105,7 +105,7 @@ interface XTraceEvent extends TraceEvent {
 }
 
 // The trace format supports a number of event types that we ignore.
-type ImportableTraceEvent = BTraceEvent | ETraceEvent | XTraceEvent
+export type ImportableTraceEvent = BTraceEvent | ETraceEvent | XTraceEvent
 
 interface StackFrame {
   line: string
@@ -142,12 +142,12 @@ interface TraceEventObject {
 
 type Trace = TraceEvent[] | TraceEventObject | TraceWithSamples
 
-function pidTidKey(pid: number, tid: number): string {
+export function pidTidKey(pid: number, tid: number): string {
   // We zero-pad the PID and TID to make sorting them by pid/tid pair later easier.
   return `${zeroPad('' + pid, 10)}:${zeroPad('' + tid, 10)}`
 }
 
-function partitionByPidTid<T extends {tid: number | string; pid: number | string}>(
+export function partitionByPidTid<T extends {tid: number | string; pid: number | string}>(
   events: T[],
 ): Map<string, T[]> {
   const map = new Map<string, T[]>()
@@ -160,7 +160,7 @@ function partitionByPidTid<T extends {tid: number | string; pid: number | string
   return map
 }
 
-function selectQueueToTakeFromNext(
+export function selectQueueToTakeFromNext(
   bEventQueue: BTraceEvent[],
   eEventQueue: ETraceEvent[],
   last?: BTraceEvent,
@@ -198,7 +198,7 @@ function selectQueueToTakeFromNext(
   return 'B'
 }
 
-function convertToEventQueues(events: ImportableTraceEvent[]): [BTraceEvent[], ETraceEvent[]] {
+export function convertToEventQueues(events: ImportableTraceEvent[]): [BTraceEvent[], ETraceEvent[]] {
   const beginEvents: BTraceEvent[] = []
   const endEvents: ETraceEvent[] = []
 
@@ -319,7 +319,7 @@ function getEventId(event: TraceEvent): string {
   return key
 }
 
-function frameInfoForEvent(
+export function frameInfoForEvent(
   event: TraceEvent,
   exporterSource: ExporterSource = ExporterSource.UNKNOWN,
 ): FrameInfo {

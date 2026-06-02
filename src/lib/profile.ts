@@ -126,7 +126,7 @@ export class Profile {
 
   protected groupName: string = ''
 
-  protected totalWeight: number
+  totalWeight: number
 
   protected frames = new KeyedSet<Frame>()
 
@@ -137,20 +137,20 @@ export class Profile {
   //
   // The "grouped" call tree is one in which each node has at most one child per
   // frame. Nodes are ordered in decreasing order of weight
-  protected appendOrderCalltreeRoot = new CallTreeNode(Frame.root, null)
-  protected groupedCalltreeRoot = new CallTreeNode(Frame.root, null)
+  appendOrderCalltreeRoot = new CallTreeNode(Frame.root, null)
+  groupedCalltreeRoot = new CallTreeNode(Frame.root, null)
 
-  public getAppendOrderCalltreeRoot() {
+  getAppendOrderCalltreeRoot() {
     return this.appendOrderCalltreeRoot
   }
-  public getGroupedCalltreeRoot() {
+  getGroupedCalltreeRoot() {
     return this.groupedCalltreeRoot
   }
 
   // List of references to CallTreeNodes at the top of the
   // stack at the time of the sample.
-  protected samples: CallTreeNode[] = []
-  protected weights: number[] = []
+  samples: CallTreeNode[] = []
+  weights: number[] = []
 
   protected valueFormatter: ValueFormatter = new RawValueFormatter()
 
@@ -204,10 +204,7 @@ export class Profile {
     return this.totalNonIdleWeight
   }
 
-  // This is private because it should only be called in the ProfileBuilder
-  // classes. Once a Profile instance has been constructed, it should be treated
-  // as immutable.
-  protected sortGroupedCallTree() {
+  sortGroupedCallTree() {
     function visit(node: CallTreeNode) {
       node.children.sort((a, b) => -(a.getTotalWeight() - b.getTotalWeight()))
       node.children.forEach(visit)
@@ -582,7 +579,7 @@ export class CallTreeProfileBuilder extends Profile {
   private framesInStack = new Map<Frame, number>()
   private stack: Frame[] = []
 
-  private lastValue: number = 0
+  lastValue: number = 0
   private addWeightsToFrames(value: number) {
     const delta = value - this.lastValue
     for (let frame of this.framesInStack.keys()) {
