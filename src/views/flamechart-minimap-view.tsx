@@ -225,23 +225,11 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     }
   }
 
-  private rafId: number | null = null
-
-  private continuousRenderLoop = () => {
-    if (liveViewportProxy.isLiveMode && this.container) {
-      this.resizeOverlayCanvasIfNeeded()
-      this.renderRects()
-      this.renderOverlays()
-    }
-    this.rafId = requestAnimationFrame(this.continuousRenderLoop)
-  }
-
   componentDidMount() {
     window.addEventListener('resize', this.onWindowResize)
     document.body.addEventListener('scroll', this.onScroll)
     this.props.canvasContext.addBeforeFrameHandler(this.onBeforeFrame)
 
-    this.rafId = requestAnimationFrame(this.continuousRenderLoop)
   }
 
   onScroll = () => {
@@ -252,9 +240,6 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     window.removeEventListener('resize', this.onWindowResize)
     document.body.removeEventListener('scroll', this.onScroll)
     this.props.canvasContext.removeBeforeFrameHandler(this.onBeforeFrame)
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId)
-    }
   }
 
   private resizeOverlayCanvasIfNeeded() {

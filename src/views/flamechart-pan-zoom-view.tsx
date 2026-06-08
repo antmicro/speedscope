@@ -907,9 +907,6 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
         }
       }
 
-      this.renderRects()
-      this.renderOverlays()
-
       this.props.canvasContext.requestFrame()
     }
 
