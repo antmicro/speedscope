@@ -883,6 +883,7 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
   }
 
   private rafId: number | null = null
+  private wasAutoPanning: boolean = true
 
   // Dynamiclly adjusts the speed of timeline progression
   private calculateLiveLeftEdgePosition(currentViewport: Rect, dataLiveEdge: number, deltaMs: number): number {
@@ -921,7 +922,12 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
           if (!currentViewport.isEmpty()) {
             const dataLiveEdge = this.props.flamechart.getTotalWeight()
 
-            const newLeftEdge = this.calculateLiveLeftEdgePosition(currentViewport, dataLiveEdge, deltaMs)
+            let newLeftEdge: number;
+            if (!this.wasAutoPanning) {
+              newLeftEdge = dataLiveEdge - (currentViewport.width() * LIVE_EDGE_SCREEN_POSITION)
+            } else {
+              newLeftEdge = this.calculateLiveLeftEdgePosition(currentViewport, dataLiveEdge, deltaMs)
+            }
 
             this.setViewport(
               currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
@@ -929,6 +935,8 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
             )
           }
         }
+
+        this.wasAutoPanning = liveViewportProxy.autoPanToRight;
       }
 
       this.props.canvasContext.requestFrame()
