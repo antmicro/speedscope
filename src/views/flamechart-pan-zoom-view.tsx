@@ -22,6 +22,8 @@ import {timestampHoveredAtom} from '../app-state'
 import {getPosition, HoveredPoint} from '../lib/utils'
 import { liveViewportProxy } from './live-viewport-proxy'
 
+const INITIAL_LIVE_VIEWPORT_WIDTH_US = 3_000_000
+
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
   node: CallTreeNode
@@ -496,17 +498,22 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
 
     if (this.getCurrentViewport().isEmpty()) {
       const configSpaceViewportHeight = height / this.LOGICAL_VIEW_SPACE_FRAME_HEIGHT
+
+      const isLive = liveViewportProxy.isLiveMode;
+      const initialViewportWidth = isLive ? INITIAL_LIVE_VIEWPORT_WIDTH_US : this.configSpaceSize().x;
+      const initialLeftEdge = isLive ? -initialViewportWidth : 0;
+
       if (this.props.renderInverted) {
         this.setViewport(
           new Rect(
-            new Vec2(0, this.configSpaceSize().y - configSpaceViewportHeight + 1),
-            new Vec2(this.configSpaceSize().x, configSpaceViewportHeight),
+            new Vec2(initialLeftEdge, this.configSpaceSize().y - configSpaceViewportHeight + 1),
+            new Vec2(initialViewportWidth , configSpaceViewportHeight),
           ),
           false,
         )
       } else {
          this.setViewport(
-          new Rect(new Vec2(0, -1), new Vec2(this.configSpaceSize().x, configSpaceViewportHeight)),
+          new Rect(new Vec2(initialLeftEdge, -1), new Vec2(initialViewportWidth , configSpaceViewportHeight)),
           false,
         )
       }
