@@ -24,6 +24,7 @@ import { liveViewportProxy } from './live-viewport-proxy'
 
 const INITIAL_LIVE_VIEWPORT_WIDTH_US = 3_000_000
 const RERENDER_INTERVAL_MS = 500
+const LIVE_EDGE_SCREEN_POSITION = 0.8
 
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
@@ -883,6 +884,28 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
 
   private rafId: number | null = null
 
+  // Dynamiclly adjusts the speed of timeline progression
+  private calculateLiveLeftEdgePosition(currentViewport: Rect, dataLiveEdge: number, deltaMs: number): number {
+    const viewportWidth = currentViewport.width()
+    const cameraAnchor = currentViewport.origin.x + (viewportWidth * LIVE_EDGE_SCREEN_POSITION)
+
+    const drift = cameraAnchor - dataLiveEdge
+    const driftRatio = drift / viewportWidth
+
+    let speedMultiplier = 1.0
+
+    if (driftRatio > 0.5) {
+      speedMultiplier = 0.0
+    } else if (driftRatio > 0.05) {
+      speedMultiplier = 0.8
+    } else if (driftRatio < -0.05) {
+      speedMultiplier = 1.2
+    }
+
+    const deltaTraceTime = (deltaMs * 1000) * speedMultiplier
+    return currentViewport.origin.x + deltaTraceTime
+  }
+
   private continousRenderLoop = () => {
     const now = performance.now()
     const deltaMs = now - globalLastFrameTime
@@ -896,8 +919,9 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
           const currentViewport = liveViewportProxy.configSpaceViewportRect
 
           if (!currentViewport.isEmpty()) {
-            const deltaTraceTime = deltaMs * 1000
-            const newLeftEdge = currentViewport.origin.x + deltaTraceTime
+            const dataLiveEdge = this.props.flamechart.getTotalWeight()
+
+            const newLeftEdge = this.calculateLiveLeftEdgePosition(currentViewport, dataLiveEdge, deltaMs)
 
             this.setViewport(
               currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
