@@ -149,7 +149,14 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     })
 
     if (liveViewportProxy.isLiveMode) {
-      liveViewportProxy.configSpaceViewportRect = clamped
+      // In live-mode clamp only y-axies
+      const liveClamped = new Rect(
+        new Vec2(newViewport.origin.x, clamped.origin.y),
+        new Vec2(newViewport.size.x, clamped.size.y)
+      )
+
+      liveViewportProxy.configSpaceViewportRect = liveClamped
+
       if (isUserInteraction) {
         liveViewportProxy.autoPanToRight = false
       }
