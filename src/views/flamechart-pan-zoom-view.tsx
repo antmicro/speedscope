@@ -23,6 +23,7 @@ import {getPosition, HoveredPoint} from '../lib/utils'
 import { liveViewportProxy } from './live-viewport-proxy'
 
 const INITIAL_LIVE_VIEWPORT_WIDTH_US = 3_000_000
+const RERENDER_INTERVAL_MS = 500
 
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
@@ -70,6 +71,8 @@ export interface FlamechartPanZoomViewProps {
   enableTimestampPointer: boolean
   isFocused?: () => boolean
 }
+
+let globalLastFrameTime = performance.now()
 
 export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps, {}> {
   private container: Element | null = null
@@ -881,21 +884,33 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
   private rafId: number | null = null
 
   private continousRenderLoop = () => {
-    if (liveViewportProxy.isLiveMode && this.container) {
-      if (liveViewportProxy.autoPanToRight) {
-        const totalWeight = this.props.flamechart.getTotalWeight()
-        const currentViewport = liveViewportProxy.configSpaceViewportRect
+    const now = performance.now()
+    const deltaMs = now - globalLastFrameTime
 
-        if (!currentViewport.isEmpty()) {
-          const newLeftEdge = totalWeight - currentViewport.width()
-          this.setViewport(
-            currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
-            false,
-          )
+    if (liveViewportProxy.isLiveMode && this.container) {
+
+      if (deltaMs >= RERENDER_INTERVAL_MS) {
+        globalLastFrameTime = now
+
+        if (liveViewportProxy.autoPanToRight) {
+          const currentViewport = liveViewportProxy.configSpaceViewportRect
+
+          if (!currentViewport.isEmpty()) {
+            const deltaTraceTime = deltaMs * 1000
+            const newLeftEdge = currentViewport.origin.x + deltaTraceTime
+
+            this.setViewport(
+              currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
+              false,
+            )
+          }
         }
       }
+
       this.renderRects()
       this.renderOverlays()
+
+      this.props.canvasContext.requestFrame()
     }
 
     this.rafId = requestAnimationFrame(this.continousRenderLoop)
