@@ -863,7 +863,9 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
   }
   componentWillReceiveProps(nextProps: FlamechartPanZoomViewProps) {
     if (this.props.flamechart !== nextProps.flamechart) {
-      this.hoveredLabel = null
+      if (!liveViewportProxy.isLiveMode) {
+        this.hoveredLabel = null
+      }
       this.renderCanvas()
     } else if (this.props.searchResults !== nextProps.searchResults) {
       this.renderCanvas()
