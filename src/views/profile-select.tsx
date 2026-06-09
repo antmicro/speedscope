@@ -269,12 +269,16 @@ export function ProfileSelect({
 
   const [pendingForcedScroll, setPendingForcedScroll] = useState(false)
   useEffect(() => {
-    // Whenever the list of filtered profiles changes, set the first element hovered.
-    if (filteredProfiles.length > 0) {
-      setHoveredProfileIndex(filteredProfiles[0].indexInProfileGroup)
-      setPendingForcedScroll(true)
-    }
-  }, [setHoveredProfileIndex, filteredProfiles])
+    setHoveredProfileIndex(currentIndex => {
+      const stillExists = filteredProfiles.some(p => p.indexInProfileGroup === currentIndex)
+
+      if (!stillExists && filteredProfiles.length > 0) {
+        setPendingForcedScroll(true);
+        return filteredProfiles[0].indexInProfileGroup
+      }
+      return currentIndex
+    })
+  }, [filteredProfiles])
 
   const hoveredNodeRef = useCallback(
     (hoveredNode: HTMLDivElement | null) => {
