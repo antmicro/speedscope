@@ -142,6 +142,14 @@ export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) =
     flamechart,
   })
 
+  useEffect(() => {
+    return () => {
+      if (flamechartRenderer) {
+        flamechartRenderer.free()
+      }
+    }
+  }, [flamechartRenderer])
+
   const setters = useFlamechartSetters(props, FlamechartID.CHRONO)
 
   return (
@@ -210,6 +218,14 @@ export const LeftHeavyFlamechartView = memo((ownProps: FlamechartViewContainerPr
     canvasContext,
     flamechart,
   })
+
+  useEffect(() => {
+    return () => {
+      if (flamechartRenderer) {
+        flamechartRenderer.free()
+      }
+    }
+  }, [flamechartRenderer])
 
   const setters = useFlamechartSetters(ownProps, FlamechartID.LEFT_HEAVY)
 
