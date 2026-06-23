@@ -2,8 +2,10 @@ import {Graphics, WebGL} from './graphics'
 import {RectangleBatchRenderer} from './rectangle-batch-renderer'
 import {TextureRenderer} from './texture-renderer'
 import {Rect, Vec2} from '../lib/math'
+import {RowAtlas} from './row-atlas'
 import {ViewportRectangleRenderer} from './overlay-rectangle-renderer'
 import {FlamechartColorPassRenderer} from './flamechart-color-pass-renderer'
+import {FlamechartRowAtlasKey} from './flamechart-renderer'
 import {Color} from '../lib/color'
 import {Theme} from '../views/themes/theme'
 
@@ -17,10 +19,17 @@ export class CanvasContext {
   public readonly flamechartColorPassRenderer: FlamechartColorPassRenderer
   public readonly theme: Theme
 
+  public readonly rowAtlas: RowAtlas<FlamechartRowAtlasKey>
+
   constructor(canvas: HTMLCanvasElement, theme: Theme) {
     this.gl = new WebGL.Context(canvas)
     this.rectangleBatchRenderer = new RectangleBatchRenderer(this.gl)
     this.textureRenderer = new TextureRenderer(this.gl)
+    this.rowAtlas = new RowAtlas<FlamechartRowAtlasKey>(
+      this.gl,
+      this.rectangleBatchRenderer,
+      this.textureRenderer,
+    )
     this.viewportRectangleRenderer = new ViewportRectangleRenderer(this.gl, theme)
     this.flamechartColorPassRenderer = new FlamechartColorPassRenderer(this.gl, theme)
     this.theme = theme

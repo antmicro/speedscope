@@ -6,14 +6,13 @@ import {Frame, Profile, CallTreeNode} from '../lib/profile'
 import {memoizeByShallowEquality} from '../lib/utils'
 import {FlamechartView} from './flamechart-view'
 import {
-  getRowAtlas,
   createGetColorBucketForFrame,
   getCanvasContext,
   createGetCSSColorForFrame,
   getFrameToColorBucket,
 } from '../app-state/getters'
 import {Vec2, Rect} from '../lib/math'
-import {memo, useCallback, useMemo} from 'preact/compat'
+import {memo, useCallback, useMemo, useEffect} from 'preact/compat'
 import {ActiveProfileState} from '../app-state/active-profile-state'
 import {FlamechartSearchContextProvider} from './flamechart-search-view'
 import {Theme, useTheme} from './themes/theme'
@@ -98,7 +97,7 @@ export const createMemoizedFlamechartRenderer = (options?: FlamechartRendererOpt
     }): FlamechartRenderer => {
       return new FlamechartRenderer(
         canvasContext.gl,
-        getRowAtlas(canvasContext),
+        canvasContext.rowAtlas,
         flamechart,
         canvasContext.rectangleBatchRenderer,
         canvasContext.flamechartColorPassRenderer,
