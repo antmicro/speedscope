@@ -106,4 +106,9 @@ export class TextureRenderer {
     this.gl.setUnpremultipliedBlendState()
     this.gl.draw(Graphics.Primitive.TRIANGLE_STRIP, this.material, this.buffer)
   }
+
+  free() {
+    this.buffer?.free()
+    this.material?.free()
+  }
 }

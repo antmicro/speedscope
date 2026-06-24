@@ -93,4 +93,13 @@ export class CanvasContext {
 
     this.setViewport(physicalBounds, cb)
   }
+
+  free() {
+    this.rectangleBatchRenderer?.free()
+    this.textureRenderer?.free()
+    this.viewportRectangleRenderer?.free()
+    this.flamechartColorPassRenderer?.free()
+
+    this.gl.removeAfterResizeEventHandler(this.onBeforeFrame)
+  }
 }

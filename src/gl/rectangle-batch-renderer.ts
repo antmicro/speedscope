@@ -139,4 +139,8 @@ export class RectangleBatchRenderer {
     this.gl.setUnpremultipliedBlendState()
     this.gl.draw(Graphics.Primitive.TRIANGLES, this.material, props.batch.getBuffer())
   }
+
+  free() {
+    this.material?.free()
+  }
 }

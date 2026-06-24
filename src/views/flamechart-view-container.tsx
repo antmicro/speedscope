@@ -131,6 +131,12 @@ export const ChronoFlamechartView = memo((props: FlamechartViewContainerProps) =
     () => (getCanvasContext({theme, canvas: glCanvas})),
       [theme, glCanvas],
   )
+  useEffect(() => {
+    return () => {
+        canvasContext?.free()
+    }
+  }, [canvasContext])
+
   const frameToColorBucket = getFrameToColorBucket(profile)
   const getColorBucketForFrame = createGetColorBucketForFrame(frameToColorBucket)
   const getCSSColorForFrame = createGetCSSColorForFrame({theme, frameToColorBucket})

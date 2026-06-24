@@ -114,4 +114,9 @@ export class ViewportRectangleRenderer {
     )
     this.gl.draw(Graphics.Primitive.TRIANGLE_STRIP, this.material, this.buffer)
   }
+
+  free() {
+    this.buffer?.free()
+    this.material?.free()
+  }
 }

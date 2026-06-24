@@ -202,6 +202,7 @@ export namespace Graphics {
       m22: number,
     ): void
     setUniformSampler(name: string, texture: Texture, index: number): void
+    free(): void
   }
 
   export enum AttributeType {
@@ -1123,6 +1124,14 @@ export namespace WebGL {
     static from(material: Graphics.Material): Material {
       assert(material == null || material instanceof Material)
       return material as Material
+    }
+
+    free() {
+      if (this._program) {
+        this._context.gl.deleteProgram(this._program)
+        this._program = null
+        this._generation = 0
+      }
     }
   }
 
