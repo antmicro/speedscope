@@ -54,7 +54,7 @@ export const errorAtom = new Atom<boolean>(false, 'error')
 export const metadataAtom = new Atom<Metadata[] | null>(null, 'metadata');
 
 // Stores the loaded TEF files
-export const rawTefEventsAtom = new Atom<Record<string, any>[]>([]);
+export const rawTefEventsAtom = new Atom<Record<string, any>[]>([], 'rawTefEvents');
 
 // Type for the function that returns Element with a welcome message
 type WelcomeMessageFunc = (divClass: string, pClass: string, aClass: string, browseButton: VNode<HTMLButtonElement>) => VNode<HTMLDivElement>
