@@ -715,4 +715,14 @@ export class CallTreeProfileBuilder extends Profile {
     const frame = Frame.getOrInsert(this.frames, frameInfo)
     frame.args = {...frame.args, ...args}
   }
+
+  getActiveNode(): CallTreeNode | undefined {
+    return this.appendOrderStack[this.appendOrderStack.length - 1];
+  }
+
+  forEachNodeFromTop(callback: (node: CallTreeNode) => void): void {
+    for (let i = this.appendOrderStack.length - 1; i >= 0; i--) {
+      callback(this.appendOrderStack[i]);
+    }
+  }
 }
