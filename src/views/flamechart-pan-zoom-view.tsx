@@ -23,8 +23,10 @@ import {getPosition, HoveredPoint} from '../lib/utils'
 import { liveViewportProxy } from './live-viewport-proxy'
 
 const INITIAL_LIVE_VIEWPORT_WIDTH_US = 3_000_000
+const MIN_LIVE_VIEWPORT_WIDTH_US = 1_000
 const RERENDER_INTERVAL_MS = 500
 const LIVE_EDGE_SCREEN_POSITION = 0.8
+const MAX_LIVE_EDGE_DRIFT_RATIO = 0.5
 
 interface FlamechartFrameLabel {
   configSpaceBounds: Rect
@@ -906,7 +908,18 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
     }
 
     const deltaTraceTime = (deltaMs * 1000) * speedMultiplier
-    return currentViewport.origin.x + deltaTraceTime
+
+    const maxLeftEdge =
+      dataLiveEdge - viewportWidth * (LIVE_EDGE_SCREEN_POSITION - MAX_LIVE_EDGE_DRIFT_RATIO)
+
+    return Math.min(currentViewport.origin.x + deltaTraceTime, maxLeftEdge)
+  }
+
+  private calculateLiveViewportWidth(dataLiveEdge: number): number {
+    return Math.max(
+      MIN_LIVE_VIEWPORT_WIDTH_US,
+      Math.min(dataLiveEdge, INITIAL_LIVE_VIEWPORT_WIDTH_US),
+    )
   }
 
   private continousRenderLoop = () => {
@@ -924,16 +937,20 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
           const currentViewport = liveViewportProxy.configSpaceViewportRect
 
           if (!currentViewport.isEmpty()) {
+            const fittedViewport = currentViewport.withSize(
+              currentViewport.size.withX(this.calculateLiveViewportWidth(dataLiveEdge)),
+            )
+
             let newLeftEdge: number;
 
             if (!this.wasAutoPanning) {
-              newLeftEdge = dataLiveEdge - (currentViewport.width() * LIVE_EDGE_SCREEN_POSITION)
+              newLeftEdge = dataLiveEdge - (fittedViewport.width() * LIVE_EDGE_SCREEN_POSITION)
             } else {
-              newLeftEdge = this.calculateLiveLeftEdgePosition(currentViewport, dataLiveEdge, deltaMs)
+              newLeftEdge = this.calculateLiveLeftEdgePosition(fittedViewport, dataLiveEdge, deltaMs)
             }
 
             this.setViewport(
-              currentViewport.withOrigin(currentViewport.origin.withX(newLeftEdge)),
+              fittedViewport.withOrigin(fittedViewport.origin.withX(newLeftEdge)),
               false,
             )
           }
