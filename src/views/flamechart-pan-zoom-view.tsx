@@ -20,7 +20,7 @@ import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
 import {timestampHoveredAtom} from '../app-state'
 import {getPosition, HoveredPoint} from '../lib/utils'
-import { liveViewportProxy } from './live-viewport-proxy'
+import { liveViewportProxy, markLiveUserInteraction } from './live-viewport-proxy'
 
 const INITIAL_LIVE_VIEWPORT_WIDTH_US = 3_000_000
 const MIN_LIVE_VIEWPORT_WIDTH_US = 1_000
@@ -163,11 +163,11 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
         new Vec2(newViewport.size.x, clamped.size.y)
       )
 
-      liveViewportProxy.configSpaceViewportRect = liveClamped
-
       if (isUserInteraction) {
-        liveViewportProxy.autoPanToRight = false
+        markLiveUserInteraction(newViewport)
       }
+
+      liveViewportProxy.configSpaceViewportRect = liveClamped
     } else {
       this.props.setConfigSpaceViewportRect(clamped)
     }
@@ -937,9 +937,11 @@ export class FlamechartPanZoomView extends Component<FlamechartPanZoomViewProps,
           const currentViewport = liveViewportProxy.configSpaceViewportRect
 
           if (!currentViewport.isEmpty()) {
-            const fittedViewport = currentViewport.withSize(
-              currentViewport.size.withX(this.calculateLiveViewportWidth(dataLiveEdge)),
-            )
+            const fittedViewport = liveViewportProxy.hasUserZoomed
+              ? currentViewport
+              : currentViewport.withSize(
+                currentViewport.size.withX(this.calculateLiveViewportWidth(dataLiveEdge)),
+              )
 
             let newLeftEdge: number;
 

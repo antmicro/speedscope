@@ -11,7 +11,7 @@ import {Color} from '../lib/color'
 import {Theme} from './themes/theme'
 import {timestampHoveredAtom} from '../app-state'
 import {getPosition} from '../lib/utils'
-import { liveViewportProxy } from './live-viewport-proxy'
+import { liveViewportProxy, markLiveUserInteraction } from './live-viewport-proxy'
 
 interface FlamechartMinimapViewProps {
   theme: Theme
@@ -98,10 +98,11 @@ export class FlamechartMinimapView extends Component<FlamechartMinimapViewProps,
     })
 
     if (liveViewportProxy.isLiveMode) {
-      liveViewportProxy.configSpaceViewportRect = clamped
       if (isUserInteraction) {
-        liveViewportProxy.autoPanToRight = false
+        markLiveUserInteraction(newViewport)
       }
+
+      liveViewportProxy.configSpaceViewportRect = clamped
     } else {
       this.props.setConfigSpaceViewportRect(clamped)
     }
