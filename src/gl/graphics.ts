@@ -1126,13 +1126,7 @@ export namespace WebGL {
       return material as Material
     }
 
-    free() {
-      if (this._program) {
-        this._context.gl.deleteProgram(this._program)
-        this._program = null
-        this._generation = 0
-      }
-    }
+    free() {}
   }
 
   class VertexBuffer extends Graphics.VertexBuffer {
